@@ -101,11 +101,11 @@ public class ReportPanel extends JPanel {
         tabbedPane.setBackground(Color.WHITE);
 
         // Add 5 report tabs
-        tabbedPane.addTab("📊 Doanh Thu", createRevenueReportTab());
-        tabbedPane.addTab("💰 Hóa Đơn & Công Nợ", createInvoiceDebtReportTab());
-        tabbedPane.addTab("🔧 Dịch Vụ", createServiceReportTab());
-        tabbedPane.addTab("🏢 Căn Hộ & HĐ", createApartmentContractReportTab());
-        tabbedPane.addTab("📄 Xuất Báo Cáo", createExportTab());
+        tabbedPane.addTab("Doanh Thu", createRevenueReportTab());
+        tabbedPane.addTab("Hóa Đơn & Công Nợ", createInvoiceDebtReportTab());
+        tabbedPane.addTab("Dịch Vụ", createServiceReportTab());
+        tabbedPane.addTab("Căn Hộ & HĐ", createApartmentContractReportTab());
+        tabbedPane.addTab("Xuất Báo Cáo", createExportTab());
 
         mainContainer.add(tabbedPane, BorderLayout.CENTER);
 
@@ -201,10 +201,10 @@ public class ReportPanel extends JPanel {
         JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 15, 0));
         summaryPanel.setBackground(Color.WHITE);
 
-        summaryPanel.add(createStatCard("💰 Tổng Doanh Thu", "0 VNĐ", COLOR_SUCCESS, "total_revenue"));
-        summaryPanel.add(createStatCard("📈 Tháng Này", "0 VNĐ", COLOR_PRIMARY, "this_month"));
-        summaryPanel.add(createStatCard("📉 Tháng Trước", "0 VNĐ", COLOR_INFO, "last_month"));
-        summaryPanel.add(createStatCard("🔥 Tháng Cao Nhất", "0 VNĐ", COLOR_WARNING, "top_month"));
+        summaryPanel.add(createStatCard("Tổng Doanh Thu", "0 VNĐ", COLOR_SUCCESS, "total_revenue"));
+        summaryPanel.add(createStatCard("Tháng Này", "0 VNĐ", COLOR_PRIMARY, "this_month"));
+        summaryPanel.add(createStatCard("Tháng Trước", "0 VNĐ", COLOR_INFO, "last_month"));
+        summaryPanel.add(createStatCard("Tháng Cao Nhất", "0 VNĐ", COLOR_WARNING, "top_month"));
 
         panel.add(summaryPanel, BorderLayout.NORTH);
 
@@ -320,10 +320,10 @@ public class ReportPanel extends JPanel {
         JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 15, 0));
         summaryPanel.setBackground(Color.WHITE);
 
-        summaryPanel.add(createStatCard("📊 Tổng HĐ", "0", COLOR_PRIMARY, "total_invoices"));
-        summaryPanel.add(createStatCard("✅ Đã Thu", "0", COLOR_SUCCESS, "paid_invoices"));
-        summaryPanel.add(createStatCard("⏳ Chưa Thu", "0", COLOR_WARNING, "unpaid_invoices"));
-        summaryPanel.add(createStatCard("🚨 Quá Hạn", "0", COLOR_DANGER, "overdue_invoices"));
+        summaryPanel.add(createStatCard("Tổng HĐ", "0", COLOR_PRIMARY, "total_invoices"));
+        summaryPanel.add(createStatCard("Đã Thu", "0", COLOR_SUCCESS, "paid_invoices"));
+        summaryPanel.add(createStatCard("Chưa Thu", "0", COLOR_WARNING, "unpaid_invoices"));
+        summaryPanel.add(createStatCard("Quá Hạn", "0", COLOR_DANGER, "overdue_invoices"));
 
         panel.add(summaryPanel, BorderLayout.NORTH);
 
@@ -411,7 +411,7 @@ public class ReportPanel extends JPanel {
 
         // Top: Message
         JLabel infoLabel = new JLabel(
-                "<html><center>📊 <b>Báo Cáo Doanh Thu Theo Dịch Vụ</b><br>"
+                "<html><center><b>Báo Cáo Doanh Thu Theo Dịch Vụ</b><br>"
                 + "Phân tích nguồn thu từ các dịch vụ (Điện, Nước, Phí QL, Gửi Xe...)</center></html>"
         );
         infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -492,10 +492,10 @@ public class ReportPanel extends JPanel {
         JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 15, 0));
         summaryPanel.setBackground(Color.WHITE);
 
-        summaryPanel.add(createStatCard("🏢 Tổng Căn Hộ", "0", COLOR_PRIMARY, "total_apartments"));
-        summaryPanel.add(createStatCard("🔑 Đang Thuê", "0", COLOR_SUCCESS, "rented_apartments"));
-        summaryPanel.add(createStatCard("🏠 Còn Trống", "0", COLOR_INFO, "available_apartments"));
-        summaryPanel.add(createStatCard("📊 Tỷ Lệ Lấp Đầy", "0%", COLOR_WARNING, "occupancy_rate"));
+        summaryPanel.add(createStatCard("Tổng Căn Hộ", "0", COLOR_PRIMARY, "total_apartments"));
+        summaryPanel.add(createStatCard("Đang Thuê", "0", COLOR_SUCCESS, "rented_apartments"));
+        summaryPanel.add(createStatCard("Còn Trống", "0", COLOR_INFO, "available_apartments"));
+        summaryPanel.add(createStatCard("Tỷ Lệ Lấp Đầy", "0%", COLOR_WARNING, "occupancy_rate"));
 
         panel.add(summaryPanel, BorderLayout.NORTH);
 
@@ -583,7 +583,7 @@ public class ReportPanel extends JPanel {
         gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel title = new JLabel("📄 Xuất Báo Cáo");
+        JLabel title = new JLabel("Xuất Báo Cáo");
         title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0;
@@ -595,7 +595,7 @@ public class ReportPanel extends JPanel {
         gbc.gridy = 1;
 
         // Excel Export
-        ModernButton btnExportExcel = new ModernButton("📊 Xuất Excel", COLOR_SUCCESS);
+        ModernButton btnExportExcel = new ModernButton("Xuất Excel", COLOR_SUCCESS);
         btnExportExcel.setPreferredSize(new Dimension(200, 50));
         btnExportExcel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnExportExcel.addActionListener(e -> exportToExcel());

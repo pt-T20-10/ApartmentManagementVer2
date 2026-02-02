@@ -58,12 +58,12 @@ public class BuildingDialog extends JDialog {
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(new MatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
 
-        JLabel iconLabel = new JLabel(new SimpleIcon("BUILDING_BIG", 32, UIConstants.PRIMARY_COLOR));
+   
         JLabel titleLabel = new JLabel(building.getId() == null ? "THIẾT LẬP TÒA NHÀ MỚI" : "CẬP NHẬT THÔNG TIN");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLabel.setForeground(UIConstants.TEXT_PRIMARY);
 
-        headerPanel.add(iconLabel);
+   
         headerPanel.add(titleLabel);
         add(headerPanel, BorderLayout.NORTH);
 

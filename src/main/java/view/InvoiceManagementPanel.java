@@ -462,14 +462,14 @@ public class InvoiceManagementPanel extends JPanel {
         ));
         panel.setPreferredSize(new Dimension(220, 0));
 
-        JLabel actionTitle = new JLabel("⚙️ Thao Tác");
+        JLabel actionTitle = new JLabel("Thao Tác");
         actionTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
         actionTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(actionTitle);
         panel.add(Box.createVerticalStrut(20));
 
         // Create button
-        btnCreate = new ModernButton("➕ Tạo Hóa Đơn", new Color(33, 150, 243));
+        btnCreate = new ModernButton("Tạo Hóa Đơn", new Color(33, 150, 243));
         btnCreate.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnCreate.setMaximumSize(new Dimension(190, 45));
         btnCreate.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -478,7 +478,7 @@ public class InvoiceManagementPanel extends JPanel {
         panel.add(Box.createVerticalStrut(10));
 
         // View detail button
-        btnView = new ModernButton("👁️ Xem Chi Tiết", new Color(76, 175, 80));
+        btnView = new ModernButton("Xem Chi Tiết", new Color(76, 175, 80));
         btnView.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnView.setMaximumSize(new Dimension(190, 45));
         btnView.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -488,7 +488,7 @@ public class InvoiceManagementPanel extends JPanel {
         panel.add(Box.createVerticalStrut(10));
 
         // Pay button
-        btnPay = new ModernButton("💰 Thanh Toán", new Color(46, 125, 50));
+        btnPay = new ModernButton("Thanh Toán", new Color(46, 125, 50));
         btnPay.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnPay.setMaximumSize(new Dimension(190, 45));
         btnPay.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -513,7 +513,7 @@ public class InvoiceManagementPanel extends JPanel {
 
         panel.add(Box.createVerticalGlue());
 
-        JLabel infoLabel = new JLabel("<html><center>💡 Chọn hóa đơn<br>để thực hiện thao tác</center></html>");
+        JLabel infoLabel = new JLabel("<html><center>Chọn hóa đơn<br>để thực hiện thao tác</center></html>");
         infoLabel.setFont(new Font("Segoe UI", Font.ITALIC, 12));
         infoLabel.setForeground(UIConstants.TEXT_SECONDARY);
         infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);

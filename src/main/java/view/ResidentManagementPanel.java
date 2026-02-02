@@ -281,11 +281,11 @@ public class ResidentManagementPanel extends JPanel
 
         searchField.addActionListener(e -> applyFilters());
 
-        JButton searchBtn = createModernButton("🔍 Tìm", new Color(33, 150, 243));
+        JButton searchBtn = createModernButton("Tìm", new Color(33, 150, 243));
         searchBtn.setPreferredSize(new Dimension(100, 42));
         searchBtn.addActionListener(e -> applyFilters());
 
-        JButton refreshBtn = createModernButton("🔄 Làm mới", new Color(76, 175, 80));
+        JButton refreshBtn = createModernButton("Làm mới", new Color(76, 175, 80));
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> resetFilters());
 
@@ -307,11 +307,11 @@ public class ResidentManagementPanel extends JPanel
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionPanel.setBackground(Color.WHITE);
 
-        JButton statsBtn = createModernButton("📊 Thống kê", new Color(103, 58, 181));
+        JButton statsBtn = createModernButton("Thống kê", new Color(103, 58, 181));
         statsBtn.setPreferredSize(new Dimension(140, 42));
         statsBtn.addActionListener(e -> showStatistics());
 
-        JButton exportBtn = createModernButton("📤 Xuất Excel", new Color(67, 160, 71));
+        JButton exportBtn = createModernButton("Xuất Excel", new Color(67, 160, 71));
         exportBtn.setPreferredSize(new Dimension(140, 42));
         exportBtn.addActionListener(e -> exportToExcel());
 
@@ -341,7 +341,7 @@ public class ResidentManagementPanel extends JPanel
         JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         row1.setBackground(Color.WHITE);
 
-        JLabel filterLabel = new JLabel("🔍 Bộ lọc:");
+        JLabel filterLabel = new JLabel("Bộ lọc:");
         filterLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         filterLabel.setForeground(new Color(66, 66, 66));
 
@@ -395,14 +395,14 @@ public class ResidentManagementPanel extends JPanel
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         row2.setBackground(Color.WHITE);
 
-        JLabel statusLabel = new JLabel("📊 Hiển thị:");
+        JLabel statusLabel = new JLabel("Hiển thị:");
         statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         statusLabel.setForeground(new Color(66, 66, 66));
 
         statusButtonGroup = new ButtonGroup();
-        rbShowLiving = createStatusRadioButton("● Đang ở", new Color(46, 125, 50));
-        rbShowMoved = createStatusRadioButton("○ Đã chuyển đi", new Color(158, 158, 158));
-        rbShowAll = createStatusRadioButton("◉ Tất cả", new Color(33, 150, 243));
+        rbShowLiving = createStatusRadioButton("Đang ở", new Color(46, 125, 50));
+        rbShowMoved = createStatusRadioButton("Đã chuyển đi", new Color(158, 158, 158));
+        rbShowAll = createStatusRadioButton("Tất cả", new Color(33, 150, 243));
 
         statusButtonGroup.add(rbShowLiving);
         statusButtonGroup.add(rbShowMoved);
@@ -725,7 +725,7 @@ public class ResidentManagementPanel extends JPanel
 
             if (buildingFilterCombo.getItemCount() == 0 && filterId == null) {
                 tableModel.setRowCount(0);
-                countLabel.setText("📋 Không có tòa nhà nào");
+                countLabel.setText("Không có tòa nhà nào");
                 contextLabel.setText("");
             }
         } finally {

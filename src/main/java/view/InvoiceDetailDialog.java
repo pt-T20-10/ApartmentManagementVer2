@@ -11,9 +11,6 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-/**
- * Invoice Detail Dialog - View details and payment
- */
 public class InvoiceDetailDialog extends JDialog {
 
     private InvoiceDAO invoiceDAO;
@@ -63,16 +60,13 @@ public class InvoiceDetailDialog extends JDialog {
         mainPanel.setBackground(UIConstants.BACKGROUND_COLOR);
         mainPanel.setBorder(new EmptyBorder(25, 30, 25, 30));
 
-        // Header
         mainPanel.add(createHeader(), BorderLayout.NORTH);
 
-        // Content
         JScrollPane scrollPane = new JScrollPane(createContentPanel());
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Buttons
         mainPanel.add(createButtonPanel(), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
@@ -82,22 +76,20 @@ public class InvoiceDetailDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(UIConstants.BACKGROUND_COLOR);
 
-        // Left: Title
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         leftPanel.setBackground(UIConstants.BACKGROUND_COLOR);
 
-        JLabel icon = new JLabel("📄");
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+     
+  
 
         JLabel title = new JLabel("Chi Tiết Hóa Đơn");
         title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setForeground(UIConstants.TEXT_PRIMARY);
 
-        leftPanel.add(icon);
+      
         leftPanel.add(Box.createHorizontalStrut(10));
         leftPanel.add(title);
 
-        // Right: Status
         lblStatus = createStatusBadge(invoice.getStatus());
 
         panel.add(leftPanel, BorderLayout.WEST);
@@ -112,22 +104,17 @@ public class InvoiceDetailDialog extends JDialog {
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Invoice Info
         panel.add(createInvoiceInfoSection());
         panel.add(Box.createVerticalStrut(20));
 
-        // Contract Info
         panel.add(createContractInfoSection());
         panel.add(Box.createVerticalStrut(20));
 
-        // Invoice Details (services)
         panel.add(createInvoiceDetailsSection());
         panel.add(Box.createVerticalStrut(20));
 
-        // Total
         panel.add(createTotalSection());
 
-        // Payment Info (if paid)
         if ("PAID".equals(invoice.getStatus()) && invoice.getPaymentDate() != null) {
             panel.add(Box.createVerticalStrut(20));
             panel.add(createPaymentInfoSection());
@@ -137,7 +124,7 @@ public class InvoiceDetailDialog extends JDialog {
     }
 
     private JPanel createInvoiceInfoSection() {
-        JPanel section = createSection("📋 Thông Tin Hóa Đơn");
+        JPanel section = createSection("Thông Tin Hóa Đơn");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -145,14 +132,11 @@ public class InvoiceDetailDialog extends JDialog {
 
         int row = 0;
 
-        // Invoice ID
         addInfoRow(section, gbc, row++, "Mã hóa đơn:", "#" + invoice.getId());
 
-        // Period
         String period = String.format("Tháng %d/%d", invoice.getMonth(), invoice.getYear());
         addInfoRow(section, gbc, row++, "Kỳ hóa đơn:", period);
 
-        // Created date
         if (invoice.getCreatedAt() != null) {
             addInfoRow(section, gbc, row++, "Ngày tạo:", dateFormat.format(invoice.getCreatedAt()));
         }
@@ -161,7 +145,7 @@ public class InvoiceDetailDialog extends JDialog {
     }
 
     private JPanel createContractInfoSection() {
-        JPanel section = createSection("📝 Thông Tin Hợp Đồng");
+        JPanel section = createSection("Thông Tin Hợp Đồng");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -170,23 +154,19 @@ public class InvoiceDetailDialog extends JDialog {
         int row = 0;
 
         if (contract != null) {
-            // Contract number
             addInfoRow(section, gbc, row++, "Số hợp đồng:", contract.getContractNumber());
 
-            // Apartment
             Apartment apt = apartmentDAO.getApartmentById(contract.getApartmentId());
             if (apt != null) {
                 addInfoRow(section, gbc, row++, "Căn hộ:", apt.getRoomNumber());
             }
 
-            // Resident
             Resident res = residentDAO.getResidentById(contract.getResidentId());
             if (res != null) {
                 addInfoRow(section, gbc, row++, "Chủ hộ:", res.getFullName());
                 addInfoRow(section, gbc, row++, "SĐT:", res.getPhone());
             }
 
-            // Contract type
             addInfoRow(section, gbc, row++, "Loại hợp đồng:", contract.getContractTypeDisplay());
         }
 
@@ -194,10 +174,9 @@ public class InvoiceDetailDialog extends JDialog {
     }
 
     private JPanel createInvoiceDetailsSection() {
-        JPanel section = createSection("📊 Chi Tiết Thanh Toán");
+        JPanel section = createSection("Chi Tiết Thanh Toán");
         section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
 
-        // Table header
         JPanel headerPanel = new JPanel(new GridLayout(1, 4, 5, 0));
         headerPanel.setBackground(new Color(245, 245, 245));
         headerPanel.setBorder(new EmptyBorder(10, 12, 10, 12));
@@ -210,7 +189,6 @@ public class InvoiceDetailDialog extends JDialog {
 
         section.add(headerPanel);
 
-        // Get invoice details
         List<InvoiceDetail> details = invoiceDAO.getInvoiceDetails(invoice.getId());
 
         if (details == null || details.isEmpty()) {
@@ -244,10 +222,14 @@ public class InvoiceDetailDialog extends JDialog {
         row.setBorder(new EmptyBorder(10, 12, 10, 12));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        row.add(createDetailLabel(name));
-        row.add(createDetailLabel(moneyFormat.format(unitPrice) + " VNĐ"));
-        row.add(createDetailLabel(String.format("%.2f", quantity)));
-        row.add(createDetailLabel(moneyFormat.format(amount) + " VNĐ", true));
+        String unitPriceStr = (unitPrice != null) ? moneyFormat.format(unitPrice) + " VNĐ" : "0 VNĐ";
+        String quantityStr = (quantity != null) ? String.format("%.2f", quantity) : "0.00";
+        String amountStr = (amount != null) ? moneyFormat.format(amount) + " VNĐ" : "0 VNĐ";
+
+        row.add(createDetailLabel(name != null ? name : "N/A"));
+        row.add(createDetailLabel(unitPriceStr));
+        row.add(createDetailLabel(quantityStr));
+        row.add(createDetailLabel(amountStr, true));
 
         parent.add(row);
     }
@@ -265,7 +247,10 @@ public class InvoiceDetailDialog extends JDialog {
         lblLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblLabel.setForeground(new Color(33, 33, 33));
 
-        JLabel lblAmount = new JLabel(moneyFormat.format(invoice.getTotalAmount()) + " VNĐ");
+        String totalStr = (invoice.getTotalAmount() != null) ? 
+            moneyFormat.format(invoice.getTotalAmount()) + " VNĐ" : "0 VNĐ";
+        
+        JLabel lblAmount = new JLabel(totalStr);
         lblAmount.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblAmount.setForeground(new Color(46, 125, 50));
 
@@ -276,7 +261,7 @@ public class InvoiceDetailDialog extends JDialog {
     }
 
     private JPanel createPaymentInfoSection() {
-        JPanel section = createSection("✅ Thông Tin Thanh Toán");
+        JPanel section = createSection("Thông Tin Thanh Toán");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -295,7 +280,6 @@ public class InvoiceDetailDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(UIConstants.BACKGROUND_COLOR);
 
-        // Left: Edit button (only for unpaid invoices)
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         leftPanel.setBackground(UIConstants.BACKGROUND_COLOR);
 
@@ -305,7 +289,6 @@ public class InvoiceDetailDialog extends JDialog {
             leftPanel.add(btnEdit);
         }
 
-        // Right: Pay and Close buttons
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightPanel.setBackground(UIConstants.BACKGROUND_COLOR);
 
@@ -314,11 +297,10 @@ public class InvoiceDetailDialog extends JDialog {
 
         rightPanel.add(btnClose);
 
-        // Pay button (only for unpaid invoices)
         if ("UNPAID".equals(invoice.getStatus())) {
-            btnPay = createButton("💰 Thanh Toán", new Color(46, 125, 50));
+            btnPay = createButton("Thanh Toán", new Color(46, 125, 50));
             btnPay.addActionListener(e -> confirmPayment());
-            rightPanel.add(btnPay, 0); // Add at beginning
+            rightPanel.add(btnPay, 0);
         }
 
         panel.add(leftPanel, BorderLayout.WEST);
@@ -327,7 +309,6 @@ public class InvoiceDetailDialog extends JDialog {
         return panel;
     }
 
-    // ===== HELPER METHODS =====
     private JPanel createSection(String title) {
         JPanel panel = new JPanel();
         panel.setBackground(Color.WHITE);
@@ -387,11 +368,11 @@ public class InvoiceDetailDialog extends JDialog {
         badge.setOpaque(true);
 
         if ("PAID".equals(status)) {
-            badge.setText("✓ Đã thanh toán");
+            badge.setText("Đã thanh toán");
             badge.setBackground(new Color(232, 245, 233));
             badge.setForeground(new Color(46, 125, 50));
         } else {
-            badge.setText("⏳ Chưa thanh toán");
+            badge.setText("Chưa thanh toán");
             badge.setBackground(new Color(255, 243, 224));
             badge.setForeground(new Color(230, 126, 34));
         }
@@ -411,11 +392,13 @@ public class InvoiceDetailDialog extends JDialog {
         return btn;
     }
 
-    // ===== BUSINESS LOGIC =====
     private void confirmPayment() {
+        String amountStr = (invoice.getTotalAmount() != null) ? 
+            moneyFormat.format(invoice.getTotalAmount()) + " VNĐ" : "0 VNĐ";
+        
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Xác nhận đã thanh toán hóa đơn này?\n\n"
-                + "Số tiền: " + moneyFormat.format(invoice.getTotalAmount()) + " VNĐ",
+                + "Số tiền: " + amountStr,
                 "Xác Nhận Thanh Toán",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
@@ -438,7 +421,6 @@ public class InvoiceDetailDialog extends JDialog {
                         "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                // Reload dialog
                 dispose();
                 new InvoiceDetailDialog((JFrame) getOwner(), invoice.getId()).setVisible(true);
             } else {
@@ -463,7 +445,6 @@ public class InvoiceDetailDialog extends JDialog {
         dialog.setVisible(true);
 
         if (dialog.isConfirmed()) {
-            // Reload dialog
             dispose();
             new InvoiceDetailDialog(parent, invoice.getId()).setVisible(true);
         }

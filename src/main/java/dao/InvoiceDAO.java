@@ -192,13 +192,34 @@ public class InvoiceDAO {
     // PHẦN 2: INVOICE DETAILS
     // =============================================================
 
+    /**
+     * ✅ UPDATED: Insert với unit_price và quantity
+     */
     public boolean insertInvoiceDetails(Long invoiceId, List<InvoiceDetail> details) {
-        String sql = "INSERT INTO invoice_details (invoice_id, service_name, amount) VALUES (?, ?, ?)";
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = "INSERT INTO invoice_details (invoice_id, service_name, unit_price, quantity, amount) "
+                   + "VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
             for (InvoiceDetail detail : details) {
                 ps.setLong(1, invoiceId);
                 ps.setString(2, detail.getServiceName());
-                ps.setBigDecimal(3, detail.getAmount());
+                
+                // ✅ Set unit_price (có thể null)
+                if (detail.getUnitPrice() != null) {
+                    ps.setBigDecimal(3, detail.getUnitPrice());
+                } else {
+                    ps.setNull(3, Types.DECIMAL);
+                }
+                
+                // ✅ Set quantity (có thể null)
+                if (detail.getQuantity() != null) {
+                    ps.setDouble(4, detail.getQuantity());
+                } else {
+                    ps.setNull(4, Types.DOUBLE);
+                }
+                
+                ps.setBigDecimal(5, detail.getAmount());
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -209,17 +230,40 @@ public class InvoiceDAO {
         return false;
     }
 
+    /**
+     * ✅ FIXED: SELECT tất cả columns bao gồm unit_price và quantity
+     */
     public List<InvoiceDetail> getInvoiceDetails(Long invoiceId) {
         List<InvoiceDetail> details = new ArrayList<>();
-        String sql = "SELECT * FROM invoice_details WHERE invoice_id = ?";
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        // ✅ SELECT đầy đủ: id, invoice_id, service_name, unit_price, quantity, amount
+        String sql = "SELECT id, invoice_id, service_name, unit_price, quantity, amount "
+                   + "FROM invoice_details WHERE invoice_id = ?";
+        
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
             ps.setLong(1, invoiceId);
+            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     InvoiceDetail detail = new InvoiceDetail();
                     detail.setId(rs.getLong("id"));
                     detail.setInvoiceId(rs.getLong("invoice_id"));
                     detail.setServiceName(rs.getString("service_name"));
+                    
+                    // ✅ Map unit_price
+                    BigDecimal unitPrice = rs.getBigDecimal("unit_price");
+                    detail.setUnitPrice(unitPrice); // Can be null
+                    
+                    // ✅ Map quantity
+                    Double quantity = rs.getDouble("quantity");
+                    if (!rs.wasNull()) {
+                        detail.setQuantity(quantity);
+                    } else {
+                        detail.setQuantity(null); // Explicit null if database has NULL
+                    }
+                    
                     detail.setAmount(rs.getBigDecimal("amount"));
                     details.add(detail);
                 }
@@ -232,7 +276,8 @@ public class InvoiceDAO {
     
     public void deleteInvoiceDetails(Long invoiceId) {
         String sql = "DELETE FROM invoice_details WHERE invoice_id = ?";
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, invoiceId);
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -241,12 +286,14 @@ public class InvoiceDAO {
     }
 
     // =============================================================
-    // PHẦN 3: DASHBOARD STATISTICS (Đã Fix NullPointerException)
+    // PHẦN 3: DASHBOARD STATISTICS
     // =============================================================
 
     public BigDecimal getTotalRevenue() {
         String sql = "SELECT SUM(total_amount) FROM invoices WHERE status = 'PAID' AND is_deleted = 0";
-        try (Connection conn = Db_connection.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             Statement stmt = conn.createStatement(); 
+             ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) return rs.getBigDecimal(1) != null ? rs.getBigDecimal(1) : BigDecimal.ZERO;
         } catch (SQLException e) { e.printStackTrace(); }
         return BigDecimal.ZERO;
@@ -254,22 +301,24 @@ public class InvoiceDAO {
 
     public int countUnpaidInvoices() {
         String sql = "SELECT COUNT(*) FROM invoices WHERE status = 'UNPAID' AND is_deleted = 0";
-        try (Connection conn = Db_connection.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             Statement stmt = conn.createStatement(); 
+             ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) return rs.getInt(1);
         } catch (SQLException e) { e.printStackTrace(); }
         return 0;
     }
 
-    // ✅ FIXED: Check null để tránh NPE
     public BigDecimal getTotalRevenueByBuilding(Long buildingId) {
-        if (buildingId == null) return getTotalRevenue(); // Fallback nếu null
+        if (buildingId == null) return getTotalRevenue();
         
         String sql = "SELECT SUM(i.total_amount) FROM invoices i "
                 + "JOIN contracts c ON i.contract_id = c.id "
                 + "JOIN apartments a ON c.apartment_id = a.id "
                 + "JOIN floors f ON a.floor_id = f.id "
                 + "WHERE i.status = 'PAID' AND i.is_deleted = 0 AND f.building_id = ?";
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, buildingId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getBigDecimal(1) != null ? rs.getBigDecimal(1) : BigDecimal.ZERO;
@@ -278,16 +327,16 @@ public class InvoiceDAO {
         return BigDecimal.ZERO;
     }
 
-    // ✅ FIXED: Check null để tránh NPE
     public int countUnpaidInvoicesByBuilding(Long buildingId) {
-        if (buildingId == null) return countUnpaidInvoices(); // Fallback nếu null
+        if (buildingId == null) return countUnpaidInvoices();
 
         String sql = "SELECT COUNT(*) FROM invoices i "
                 + "JOIN contracts c ON i.contract_id = c.id "
                 + "JOIN apartments a ON c.apartment_id = a.id "
                 + "JOIN floors f ON a.floor_id = f.id "
                 + "WHERE i.status = 'UNPAID' AND i.is_deleted = 0 AND f.building_id = ?";
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, buildingId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
@@ -296,11 +345,10 @@ public class InvoiceDAO {
         return 0;
     }
 
-    // ✅ FIXED: Check null để tránh NPE
     public int countPaidInvoicesByBuilding(Long buildingId) {
         if (buildingId == null) {
-            // Xem tất cả (Logic cho Admin hoặc Tổng hợp)
-            try (Connection conn = Db_connection.getConnection(); Statement st = conn.createStatement()) {
+            try (Connection conn = Db_connection.getConnection(); 
+                 Statement st = conn.createStatement()) {
                 ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM invoices WHERE status='PAID' AND is_deleted=0");
                 return rs.next() ? rs.getInt(1) : 0;
             } catch (SQLException e) { return 0; }
@@ -310,7 +358,8 @@ public class InvoiceDAO {
                 + "JOIN apartments a ON c.apartment_id = a.id "
                 + "JOIN floors f ON a.floor_id = f.id "
                 + "WHERE i.status = 'PAID' AND i.is_deleted = 0 AND f.building_id = ?";
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, buildingId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
@@ -329,7 +378,8 @@ public class InvoiceDAO {
 
         if (buildingId != null) sql += " AND f.building_id = ?";
 
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, month);
             ps.setInt(2, year);
             if (buildingId != null) ps.setLong(3, buildingId);
@@ -340,8 +390,9 @@ public class InvoiceDAO {
         return BigDecimal.ZERO;
     }
     
-    // Overload for backward compatibility
-    public BigDecimal getMonthlyRevenue(int month, int year) { return getMonthlyRevenue(month, year, null); }
+    public BigDecimal getMonthlyRevenue(int month, int year) { 
+        return getMonthlyRevenue(month, year, null); 
+    }
 
     // =============================================================
     // HELPER

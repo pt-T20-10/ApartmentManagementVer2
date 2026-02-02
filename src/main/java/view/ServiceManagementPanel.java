@@ -129,10 +129,10 @@ public class ServiceManagementPanel extends JPanel {
 
         searchField.addActionListener(e -> searchServices());
 
-        ModernButton searchButton = new ModernButton("🔍 Tìm Kiếm", UIConstants.INFO_COLOR);
+        ModernButton searchButton = new ModernButton("Tìm Kiếm", UIConstants.INFO_COLOR);
         searchButton.addActionListener(e -> searchServices());
 
-        ModernButton refreshButton = new ModernButton("🔄 Làm Mới", UIConstants.SUCCESS_COLOR);
+        ModernButton refreshButton = new ModernButton("Làm Mới", UIConstants.SUCCESS_COLOR);
         refreshButton.addActionListener(e -> {
             searchField.setText(PLACEHOLDER);
             searchField.setForeground(PLACEHOLDER_COLOR);
@@ -337,15 +337,15 @@ public class ServiceManagementPanel extends JPanel {
         actionPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
         actionPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
 
-        ModernButton addButton = new ModernButton("➕ Thêm Dịch Vụ", UIConstants.SUCCESS_COLOR);
+        ModernButton addButton = new ModernButton("Thêm Dịch Vụ", UIConstants.SUCCESS_COLOR);
         addButton.setPreferredSize(new Dimension(160, 45));
         addButton.addActionListener(e -> addService());
 
-        ModernButton editButton = new ModernButton("✏ Sửa", UIConstants.WARNING_COLOR);
+        ModernButton editButton = new ModernButton("Sửa", UIConstants.WARNING_COLOR);
         editButton.setPreferredSize(new Dimension(120, 45));
         editButton.addActionListener(e -> editService());
 
-        ModernButton deleteButton = new ModernButton("🗑 Xóa", UIConstants.DANGER_COLOR);
+        ModernButton deleteButton = new ModernButton("Xóa", UIConstants.DANGER_COLOR);
         deleteButton.setPreferredSize(new Dimension(120, 45));
         deleteButton.addActionListener(e -> deleteService());
 

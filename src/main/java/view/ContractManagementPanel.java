@@ -171,11 +171,11 @@ public class ContractManagementPanel extends JPanel {
 
         searchField.addActionListener(e -> applyFilters());
 
-        JButton searchBtn = createModernButton("🔍 Tìm", new Color(33, 150, 243));
+        JButton searchBtn = createModernButton("Tìm", new Color(33, 150, 243));
         searchBtn.setPreferredSize(new Dimension(100, 42));
         searchBtn.addActionListener(e -> applyFilters());
 
-        JButton refreshBtn = createModernButton("🔄 Làm mới", new Color(76, 175, 80));
+        JButton refreshBtn = createModernButton("Làm mới", new Color(76, 175, 80));
         refreshBtn.setPreferredSize(new Dimension(130, 42));
         refreshBtn.addActionListener(e -> resetFilters());
 
@@ -197,16 +197,16 @@ public class ContractManagementPanel extends JPanel {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionPanel.setBackground(Color.WHITE);
 
-        JButton addBtn = createModernButton("➕ Tạo hợp đồng", new Color(99, 102, 241));
+        JButton addBtn = createModernButton("Tạo hợp đồng", new Color(99, 102, 241));
         addBtn.setPreferredSize(new Dimension(160, 42));
         addBtn.addActionListener(e -> showCreateContractDialog());
         addBtn.setVisible(permissionManager.canAdd(PermissionManager.MODULE_CONTRACTS));
 
-        JButton statsBtn = createModernButton("📊 Thống kê", new Color(103, 58, 181));
+        JButton statsBtn = createModernButton("Thống kê", new Color(103, 58, 181));
         statsBtn.setPreferredSize(new Dimension(140, 42));
         statsBtn.addActionListener(e -> showStatistics());
 
-        JButton exportBtn = createModernButton("📤 Xuất Excel", new Color(67, 160, 71));
+        JButton exportBtn = createModernButton("Xuất Excel", new Color(67, 160, 71));
         exportBtn.setPreferredSize(new Dimension(140, 42));
         exportBtn.addActionListener(e -> exportToExcel());
 
@@ -237,7 +237,7 @@ public class ContractManagementPanel extends JPanel {
         JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         row1.setBackground(Color.WHITE);
 
-        JLabel filterLabel = new JLabel("🔍 Bộ lọc:");
+        JLabel filterLabel = new JLabel("Bộ lọc:");
         filterLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         filterLabel.setForeground(new Color(66, 66, 66));
 
@@ -278,15 +278,15 @@ public class ContractManagementPanel extends JPanel {
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         row2.setBackground(Color.WHITE);
 
-        JLabel statusLabel = new JLabel("📊 Hiển thị:");
+        JLabel statusLabel = new JLabel("Hiển thị:");
         statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         statusLabel.setForeground(new Color(66, 66, 66));
 
         // ✅ CẬP NHẬT: Mặc định chỉ chọn Active và Expiring, bỏ chọn Expired và Terminated
-        chkShowActive = createStatusCheckbox("● Đang hiệu lực", new Color(46, 125, 50), true);
-        chkShowExpiring = createStatusCheckbox("⚠ Sắp hết hạn", new Color(230, 126, 34), true);
-        chkShowExpired = createStatusCheckbox("✕ Đã hết hạn", new Color(211, 47, 47), false);
-        chkShowTerminated = createStatusCheckbox("○ Đã thanh lý/Kết thúc", new Color(117, 117, 117), false); // Changed to false
+        chkShowActive = createStatusCheckbox("Đang hiệu lực", new Color(46, 125, 50), true);
+        chkShowExpiring = createStatusCheckbox("Sắp hết hạn", new Color(230, 126, 34), true);
+        chkShowExpired = createStatusCheckbox("Đã hết hạn", new Color(211, 47, 47), false);
+        chkShowTerminated = createStatusCheckbox("Đã thanh lý/Kết thúc", new Color(117, 117, 117), false); // Changed to false
 
         row2.add(statusLabel);
         row2.add(Box.createHorizontalStrut(15));

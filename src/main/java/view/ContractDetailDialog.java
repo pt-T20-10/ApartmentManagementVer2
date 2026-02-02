@@ -175,16 +175,16 @@ public class ContractDetailDialog extends JDialog {
         tabbedPane.setBackground(UIConstants.BACKGROUND_COLOR);
 
         JPanel infoPanel = createInfoPanel();
-        tabbedPane.addTab("📋 Thông tin", infoPanel);
+        tabbedPane.addTab("Thông tin", infoPanel);
 
         servicesContentPanel = new JPanel(new BorderLayout(0, 15));
         servicesContentPanel.setBackground(UIConstants.BACKGROUND_COLOR);
         servicesContentPanel.setBorder(new EmptyBorder(20, 25, 20, 25));
         refreshServiceTab();
-        tabbedPane.addTab("🔧 Dịch vụ", servicesContentPanel);
+        tabbedPane.addTab("Dịch vụ", servicesContentPanel);
 
         historyPanel = new ContractHistoryPanel(contract.getId());
-        tabbedPane.addTab("📜 Lịch sử", historyPanel);
+        tabbedPane.addTab("Lịch sử", historyPanel);
 
         return tabbedPane;
     }
@@ -366,7 +366,7 @@ public class ContractDetailDialog extends JDialog {
     }
 
     private JPanel createContractInfoSection() {
-        JPanel section = createSection("📋 Thông Tin Hợp Đồng");
+        JPanel section = createSection("Thông Tin Hợp Đồng");
         section.setLayout(new GridLayout(5, 4, 15, 12));
         section.setBorder(BorderFactory.createCompoundBorder(section.getBorder(), new EmptyBorder(15, 20, 15, 20)));
         section.add(createInfoLabel("Số hợp đồng:"));
@@ -403,7 +403,7 @@ public class ContractDetailDialog extends JDialog {
     }
 
     private JPanel createApartmentInfoSection() {
-        JPanel section = createSection("🏠 Thông Tin Căn Hộ");
+        JPanel section = createSection("Thông Tin Căn Hộ");
         section.setLayout(new GridLayout(3, 4, 15, 12));
         section.setBorder(BorderFactory.createCompoundBorder(section.getBorder(), new EmptyBorder(15, 20, 15, 20)));
         if (apartment != null) {
@@ -428,7 +428,7 @@ public class ContractDetailDialog extends JDialog {
     }
 
     private JPanel createResidentInfoSection() {
-        JPanel section = createSection("👤 Thông Tin Chủ Hộ");
+        JPanel section = createSection("Thông Tin Chủ Hộ");
         section.setLayout(new GridLayout(2, 4, 15, 12));
         section.setBorder(BorderFactory.createCompoundBorder(section.getBorder(), new EmptyBorder(15, 20, 15, 20)));
         if (resident != null) {
@@ -447,7 +447,7 @@ public class ContractDetailDialog extends JDialog {
     }
 
     private JPanel createNotesSection() {
-        JPanel section = createSection("📝 Ghi Chú");
+        JPanel section = createSection("Ghi Chú");
         section.setLayout(new BorderLayout(0, 10));
         section.setBorder(BorderFactory.createCompoundBorder(section.getBorder(), new EmptyBorder(15, 20, 15, 20)));
         JTextArea txtNotes = new JTextArea(contract.getNotes());
@@ -465,14 +465,14 @@ public class ContractDetailDialog extends JDialog {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIConstants.BORDER_COLOR));
-        JButton btnEdit = createButton("✏️ Sửa", new Color(33, 150, 243));
+        JButton btnEdit = createButton("Sửa", new Color(33, 150, 243));
         btnEdit.addActionListener(e -> editContract());
-        JButton btnRenew = createButton("🔄 Gia hạn", new Color(76, 175, 80));
+        JButton btnRenew = createButton("Gia hạn", new Color(76, 175, 80));
         btnRenew.setForeground(Color.WHITE);
         btnRenew.addActionListener(e -> renewContract());
         btnRenew.setEnabled(contract.canBeRenewed());
         btnRenew.setVisible(contract.isRental());
-        JButton btnTerminate = createButton("❌ Kết thúc", new Color(244, 67, 54));
+        JButton btnTerminate = createButton("Kết thúc", new Color(244, 67, 54));
         btnTerminate.setForeground(Color.WHITE);
         btnTerminate.addActionListener(e -> terminateContract());
         btnTerminate.setEnabled(contract.canBeTerminated());

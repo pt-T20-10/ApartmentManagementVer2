@@ -162,7 +162,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createContractInfoSection() {
-        JPanel section = createSection("📋 Thông Tin Hợp Đồng");
+        JPanel section = createSection("Thông Tin Hợp Đồng");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -224,7 +224,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createLocationSection() {
-        JPanel section = createSection("🏢 Vị Trí Căn Hộ");
+        JPanel section = createSection("Vị Trí Căn Hộ");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -285,7 +285,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createResidentSection() {
-        JPanel section = createSection("👤 Thông Tin Khách Thuê / Chủ Hộ");
+        JPanel section = createSection("Thông Tin Khách Thuê / Chủ Hộ");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -369,7 +369,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createDatesSection() {
-        datesSection = createSection("📅 Thời Hạn Hợp Đồng");
+        datesSection = createSection("Thời Hạn Hợp Đồng");
         datesSection.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -422,7 +422,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createFinancialSection() {
-        JPanel section = createSection("💰 Thông Tin Tài Chính");
+        JPanel section = createSection("Thông Tin Tài Chính");
         section.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -467,7 +467,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createServicesSection() {
-        JPanel section = createSection("🔧 Dịch Vụ Áp Dụng");
+        JPanel section = createSection("Dịch Vụ Áp Dụng");
         section.setLayout(new BorderLayout());
 
         servicesPanel = new JPanel();
@@ -484,7 +484,7 @@ public class ContractFormDialog extends JDialog {
     }
 
     private JPanel createNotesSection() {
-        JPanel section = createSection("📝 Ghi Chú");
+        JPanel section = createSection("Ghi Chú");
         section.setLayout(new BorderLayout());
 
         txtNotes = new JTextArea(3, 20);
@@ -508,7 +508,7 @@ public class ContractFormDialog extends JDialog {
         JButton btnCancel = createButton("Hủy", new Color(158, 158, 158));
         btnCancel.addActionListener(e -> dispose());
 
-        JButton btnSave = createButton(isEditMode ? "💾 Lưu" : "✅ Tạo Hợp Đồng", UIConstants.PRIMARY_COLOR);
+        JButton btnSave = createButton(isEditMode ? "Lưu" : "Tạo Hợp Đồng", UIConstants.PRIMARY_COLOR);
         btnSave.addActionListener(e -> saveContract());
 
         panel.add(btnCancel);
