@@ -10,10 +10,8 @@ import util.UIConstants;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class BuildingManagementPanel extends JPanel {
 
@@ -84,34 +82,22 @@ public class BuildingManagementPanel extends JPanel {
     }
 
     // =====================================================
-    // LOAD DATA (QUAN TRỌNG: Đã thêm logic lọc)
+    // LOAD DATA (ĐÃ FIX: Hiển thị toàn bộ danh sách được phân quyền)
     // =====================================================
     private void loadBuildings() {
         cardsContainer.removeAll();
 
-        // 1. Lấy tất cả tòa nhà từ DB
-        List<Building> allBuildings = buildingDAO.getAllBuildings();
-        List<Building> displayBuildings;
+        // ✅ FIX: Lấy trực tiếp danh sách từ DAO
+        // BuildingDAO đã tự động lọc theo bảng user_buildings (Manager thấy list tòa mình quản lý)
+        // Admin thấy toàn bộ.
+        List<Building> displayBuildings = buildingDAO.getAllBuildings();
 
-        // 2. Lấy ID tòa nhà được phép xem của User hiện tại
-        Long userBuildingId = permissionManager.getBuildingFilter();
+        // Không còn đoạn code tự filter bằng getBuildingFilter() ở đây nữa
 
-        // 3. Lọc danh sách
-        if (userBuildingId == null) {
-            // Nếu là NULL (Admin) -> Xem hết
-            displayBuildings = allBuildings;
-        } else {
-            // Nếu có ID (Manager/Staff) -> Chỉ lấy tòa nhà trùng ID
-            displayBuildings = allBuildings.stream()
-                    .filter(b -> b.getId().equals(userBuildingId))
-                    .collect(Collectors.toList());
-        }
-
-        // 4. Hiển thị ra giao diện
         if (displayBuildings.isEmpty()) {
             cardsContainer.setLayout(new BorderLayout());
 
-            String message = (userBuildingId == null)
+            String message = permissionManager.isAdmin()
                     ? "Chưa có tòa nhà nào.<br>Nhấn <b>Thêm Tòa Nhà</b> để bắt đầu."
                     : "Bạn chưa được phân công vào tòa nhà nào.<br>Vui lòng liên hệ Admin.";
 
@@ -146,18 +132,16 @@ public class BuildingManagementPanel extends JPanel {
     // =====================================================
     // CRUD OPERATIONS
     // =====================================================
-    private void showAddDialog() {
+private void showAddDialog() {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
         BuildingDialog dialog = new BuildingDialog(parent, new Building());
         dialog.setVisible(true);
 
+        // Dialog đã tự xử lý insert/update bên trong rồi
+        // Chỉ cần reload lại danh sách nếu confirmed
         if (dialog.isConfirmed()) {
-            if (buildingDAO.insertBuilding(dialog.getBuilding())) {
-                JOptionPane.showMessageDialog(this, "Thêm tòa nhà thành công!");
-                loadBuildings();
-            } else {
-                JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this, "Thêm tòa nhà thành công!");
+            loadBuildings();
         }
     }
 
@@ -166,13 +150,11 @@ public class BuildingManagementPanel extends JPanel {
         BuildingDialog dialog = new BuildingDialog(parent, building);
         dialog.setVisible(true);
 
+        // Dialog đã tự xử lý insert/update bên trong rồi
+        // Chỉ cần reload lại danh sách nếu confirmed
         if (dialog.isConfirmed()) {
-            if (buildingDAO.updateBuilding(dialog.getBuilding())) {
-                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadBuildings();
-            } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+            loadBuildings();
         }
     }
 

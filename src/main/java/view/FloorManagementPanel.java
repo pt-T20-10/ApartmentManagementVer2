@@ -372,63 +372,37 @@ public class FloorManagementPanel extends JPanel {
         }
     }
 
-    private void showAddDialog() {
-        if (currentBuilding == null || currentBuilding.getId() == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn Tòa nhà trước!");
-            return;
+private void showAddDialog() {
+        if (currentBuilding == null || currentBuilding.getId() == null) { 
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn Tòa nhà trước!"); return; 
         }
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        Floor newFloor = new Floor();
-
+        Floor newFloor = new Floor(); 
+        
         newFloor.setBuildingId(currentBuilding.getId());
-
-        FloorDialog dialog = new FloorDialog(parent, newFloor);
-
+        
+        FloorDialog dialog = new FloorDialog(parent, newFloor); 
+        
         dialog.setVisible(true);
+        
+        // Dialog đã tự xử lý insert/update bên trong rồi
+        // Chỉ cần reload lại danh sách nếu confirmed
         if (dialog.isConfirmed()) {
-            Floor f = dialog.getFloor();
-
-            // --- SỬA LỖI: THÊM VALIDATION ---
-            if (floorDAO.isFloorNumberExists(f.getBuildingId(), f.getFloorNumber())) {
-                JOptionPane.showMessageDialog(this,
-                        "Tầng số " + f.getFloorNumber() + " đã tồn tại trong tòa nhà này!",
-                        "Lỗi trùng lặp",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            if (floorDAO.insertFloor(f)) {
-                JOptionPane.showMessageDialog(this, "Thêm tầng thành công!");
-                loadFloors();
-            } else {
-                JOptionPane.showMessageDialog(this, "Thêm thất bại!");
-            }
+            JOptionPane.showMessageDialog(this, "Thêm tầng thành công!"); 
+            loadFloors(); 
         }
     }
 
     private void editFloor(Floor floor) {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        FloorDialog dialog = new FloorDialog(parent, floor);
+        FloorDialog dialog = new FloorDialog(parent, floor); 
         dialog.setVisible(true);
+        
+        // Dialog đã tự xử lý insert/update bên trong rồi
+        // Chỉ cần reload lại danh sách nếu confirmed
         if (dialog.isConfirmed()) {
-            Floor updated = dialog.getFloor();
-
-            // --- SỬA LỖI: THÊM VALIDATION KHI SỬA ---
-            // excludeId = floor.getId() để không báo trùng với chính nó
-            if (floorDAO.isFloorNumberExists(updated.getBuildingId(), updated.getFloorNumber(), floor.getId())) {
-                JOptionPane.showMessageDialog(this,
-                        "Tầng số " + updated.getFloorNumber() + " đã tồn tại!",
-                        "Lỗi trùng lặp",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            if (floorDAO.updateFloor(updated)) {
-                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadFloors();
-            } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
-            }
+            JOptionPane.showMessageDialog(this, "Cập nhật thành công!"); 
+            loadFloors(); 
         }
     }
 

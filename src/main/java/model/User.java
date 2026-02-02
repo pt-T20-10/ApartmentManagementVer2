@@ -1,15 +1,16 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
- * User Entity Represents a user account in the system with hierarchical
- * permissions
- *
- * Roles: - ADMIN: System administrator (full access to all buildings) -
- * MANAGER: Building manager (manages one building and its staff) - STAFF:
- * Building staff (works at assigned building, handles
- * residents/contracts/invoices)
+ * User Entity - UPDATED for Many-to-Many Buildings
+ * 
+ * Roles:
+ * - ADMIN: System administrator (full access to all buildings)
+ * - MANAGER: Building manager (manages MULTIPLE buildings and their staff)
+ * - STAFF: Building staff (works at assigned buildings, handles residents/contracts/invoices)
  */
 public class User {
 
@@ -28,18 +29,22 @@ public class User {
     private Date createdAt;
     private Date lastLogin;
 
-    // ========== NEW FIELDS (Phase 2 - Hierarchical Permissions) ==========
-    private Long buildingId;           // ID of assigned building (NULL for ADMIN)
-    private String buildingName;       // Name of building (for display only, not in DB)
-    private Long assignedBy;           // ID of user who created/assigned this account
-    private String assignedByName;     // Name of assigner (for display only, not in DB)
-    private Date assignedDate;         // Date when assigned to building
+    // ========== NEW FIELDS (Phase 2 → Phase 5: Many-to-Many) ==========
+    private List<Long> buildingIds;           // IDs of assigned buildings (NULL/empty for ADMIN)
+    private List<String> buildingNames;       // Names of buildings (for display only, not in DB)
+    private Long assignedBy;                  // ID of user who created/assigned this account
+    private String assignedByName;            // Name of assigner (for display only, not in DB)
+    private Date assignedDate;                // Date when assigned (kept for backward compat)
 
     // ========== CONSTRUCTORS ==========
+
     public User() {
+        this.buildingIds = new ArrayList<>();
+        this.buildingNames = new ArrayList<>();
     }
 
     public User(String username, String password, String fullName, String role) {
+        this();
         this.username = username;
         this.password = password;
         this.fullName = fullName;
@@ -48,7 +53,8 @@ public class User {
     }
 
     public User(Long id, String username, String password, String fullName,
-            String role, boolean isActive, Date createdAt, Date lastLogin) {
+                String role, boolean isActive, Date createdAt, Date lastLogin) {
+        this();
         this.id = id;
         this.username = username;
         this.password = password;
@@ -57,133 +63,89 @@ public class User {
         this.isActive = isActive;
         this.createdAt = createdAt;
         this.lastLogin = lastLogin;
-    }
-
-    public User(Long id, String username, String password, String fullName,
-            String role, boolean isActive, Date createdAt, Date lastLogin,
-            Long buildingId, String buildingName, Long assignedBy,
-            String assignedByName, Date assignedDate) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.fullName = fullName;
-        this.role = role;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-        this.lastLogin = lastLogin;
-        this.buildingId = buildingId;
-        this.buildingName = buildingName;
-        this.assignedBy = assignedBy;
-        this.assignedByName = assignedByName;
-        this.assignedDate = assignedDate;
     }
 
     // ========== GETTERS AND SETTERS ==========
-    public Long getId() {
-        return id;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public Date getLastLogin() { return lastLogin; }
+    public void setLastLogin(Date lastLogin) { this.lastLogin = lastLogin; }
+
+    // --- Building IDs (Many-to-Many) ---
+    public List<Long> getBuildingIds() { return buildingIds; }
+    public void setBuildingIds(List<Long> buildingIds) { 
+        this.buildingIds = buildingIds != null ? buildingIds : new ArrayList<>(); 
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public List<String> getBuildingNames() { return buildingNames; }
+    public void setBuildingNames(List<String> buildingNames) { 
+        this.buildingNames = buildingNames != null ? buildingNames : new ArrayList<>(); 
     }
 
-    public String getUsername() {
-        return username;
-    }
+    public Long getAssignedBy() { return assignedBy; }
+    public void setAssignedBy(Long assignedBy) { this.assignedBy = assignedBy; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getAssignedByName() { return assignedByName; }
+    public void setAssignedByName(String assignedByName) { this.assignedByName = assignedByName; }
 
-    public String getPassword() {
-        return password;
-    }
+    public Date getAssignedDate() { return assignedDate; }
+    public void setAssignedDate(Date assignedDate) { this.assignedDate = assignedDate; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getLastLogin() {
-        return lastLogin;
-    }
-
-    public void setLastLogin(Date lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-
+    // ========== BACKWARD COMPATIBILITY ==========
+    // Giữ để không break code cũ — trả về building đầu tiên
+    
+    @Deprecated
     public Long getBuildingId() {
-        return buildingId;
+        return (buildingIds != null && !buildingIds.isEmpty()) ? buildingIds.get(0) : null;
     }
 
+    @Deprecated
     public void setBuildingId(Long buildingId) {
-        this.buildingId = buildingId;
+        if (buildingId != null) {
+            this.buildingIds = new ArrayList<>();
+            this.buildingIds.add(buildingId);
+        } else {
+            this.buildingIds = new ArrayList<>();
+        }
     }
 
+    @Deprecated
     public String getBuildingName() {
-        return buildingName;
+        return (buildingNames != null && !buildingNames.isEmpty()) ? buildingNames.get(0) : null;
     }
 
+    @Deprecated
     public void setBuildingName(String buildingName) {
-        this.buildingName = buildingName;
-    }
-
-    public Long getAssignedBy() {
-        return assignedBy;
-    }
-
-    public void setAssignedBy(Long assignedBy) {
-        this.assignedBy = assignedBy;
-    }
-
-    public String getAssignedByName() {
-        return assignedByName;
-    }
-
-    public void setAssignedByName(String assignedByName) {
-        this.assignedByName = assignedByName;
-    }
-
-    public Date getAssignedDate() {
-        return assignedDate;
-    }
-
-    public void setAssignedDate(Date assignedDate) {
-        this.assignedDate = assignedDate;
+        if (buildingName != null) {
+            this.buildingNames = new ArrayList<>();
+            this.buildingNames.add(buildingName);
+        } else {
+            this.buildingNames = new ArrayList<>();
+        }
     }
 
     // ========== ROLE CHECK METHODS ==========
+
     public boolean isAdmin() {
         return ROLE_ADMIN.equalsIgnoreCase(this.role);
     }
@@ -196,22 +158,20 @@ public class User {
         return ROLE_STAFF.equalsIgnoreCase(this.role);
     }
 
-    // ========== BUILDING ACCESS METHODS ==========
+    // ========== BUILDING ACCESS METHODS (UPDATED) ==========
+
     public boolean hasBuilding() {
-        return this.buildingId != null;
+        return this.buildingIds != null && !this.buildingIds.isEmpty();
     }
 
     /**
-     * ADMIN access all buildings. MANAGER/STAFF chỉ access building được gán.
+     * ADMIN access all buildings.
+     * MANAGER/STAFF chỉ access buildings được gán.
      */
     public boolean canAccessBuilding(Long buildingId) {
-        if (isAdmin()) {
-            return true;
-        }
-        if (this.buildingId == null) {
-            return false;
-        }
-        return this.buildingId.equals(buildingId);
+        if (isAdmin()) return true;
+        if (buildingIds == null || buildingIds.isEmpty()) return false;
+        return buildingIds.contains(buildingId);
     }
 
     /**
@@ -229,27 +189,22 @@ public class User {
     }
 
     // ========== DISPLAY HELPERS ==========
+
     public String getRoleDisplayName() {
-        if (role == null) {
-            return "Không xác định";
-        }
+        if (role == null) return "Không xác định";
 
         switch (role.toUpperCase()) {
-            case ROLE_ADMIN:
-                return "Quản trị viên";
-            case ROLE_MANAGER:
-                return "Quản lý tòa nhà";
-            case ROLE_STAFF:
-                return "Nhân viên";
-            default:
-                return role;
+            case ROLE_ADMIN:    return "Quản trị viên";
+            case ROLE_MANAGER:  return "Quản lý tòa nhà";
+            case ROLE_STAFF:    return "Nhân viên";
+            default:            return role;
         }
     }
 
     public String getFullRoleDisplay() {
         String roleDisplay = getRoleDisplayName();
-        if (hasBuilding() && buildingName != null) {
-            return roleDisplay + " - " + buildingName;
+        if (hasBuilding() && buildingNames != null && !buildingNames.isEmpty()) {
+            return roleDisplay + " - " + String.join(", ", buildingNames);
         }
         return roleDisplay;
     }
@@ -259,14 +214,13 @@ public class User {
     }
 
     // ========== VALIDATION ==========
+
     public boolean hasValidRole() {
-        if (role == null) {
-            return false;
-        }
+        if (role == null) return false;
         String upper = role.toUpperCase();
         return ROLE_ADMIN.equals(upper)
-                || ROLE_MANAGER.equals(upper)
-                || ROLE_STAFF.equals(upper);
+            || ROLE_MANAGER.equals(upper)
+            || ROLE_STAFF.equals(upper);
     }
 
     /**
@@ -289,16 +243,17 @@ public class User {
         if (!hasValidRole()) {
             return "Vai trò không hợp lệ";
         }
-        if (needsBuildingAssignment() && buildingId == null) {
-            return getRoleDisplayName() + " phải được gán vào tòa nhà";
+        if (needsBuildingAssignment() && !hasBuilding()) {
+            return getRoleDisplayName() + " phải được gán vào ít nhất 1 tòa nhà";
         }
-        if (isAdmin() && buildingId != null) {
+        if (isAdmin() && hasBuilding()) {
             return "Quản trị viên không được gán vào tòa nhà cụ thể";
         }
         return null;
     }
 
     // ========== UTILITY ==========
+
     /**
      * Safe copy không có password — dùng cho display.
      */
@@ -311,8 +266,8 @@ public class User {
         safe.setActive(this.isActive);
         safe.setCreatedAt(this.createdAt);
         safe.setLastLogin(this.lastLogin);
-        safe.setBuildingId(this.buildingId);
-        safe.setBuildingName(this.buildingName);
+        safe.setBuildingIds(new ArrayList<>(this.buildingIds));
+        safe.setBuildingNames(new ArrayList<>(this.buildingNames));
         safe.setAssignedBy(this.assignedBy);
         safe.setAssignedByName(this.assignedByName);
         safe.setAssignedDate(this.assignedDate);
@@ -321,16 +276,16 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{"
-                + "id=" + id
-                + ", username='" + username + '\''
-                + ", fullName='" + fullName + '\''
-                + ", role='" + role + '\''
-                + ", isActive=" + isActive
-                + ", buildingId=" + buildingId
-                + ", buildingName='" + buildingName + '\''
-                + ", assignedBy=" + assignedBy
-                + ", assignedDate=" + assignedDate
-                + '}';
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", role='" + role + '\'' +
+                ", isActive=" + isActive +
+                ", buildingIds=" + buildingIds +
+                ", buildingNames=" + buildingNames +
+                ", assignedBy=" + assignedBy +
+                ", assignedDate=" + assignedDate +
+                '}';
     }
 }

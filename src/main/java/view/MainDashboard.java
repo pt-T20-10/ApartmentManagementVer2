@@ -2,24 +2,20 @@ package view;
 
 import util.UIConstants;
 import util.PermissionManager;
-import connection.Db_connection;
-import dao.UserDAO;
 import model.Building;
 import model.Floor;
 import model.User;
 import util.SessionManager;
-import util.PasswordUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
- * Main Dashboard - Sky Blue Theme (Xanh Dương Tươi Sáng)
+ * Main Dashboard - Sky Blue Theme
+ * Updated: Đã chuyển Building Selector sang DashboardPanel
  */
 public class MainDashboard extends JFrame implements DashboardNavigator {
 
@@ -40,29 +36,22 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
 
     private SidebarButton currentActiveButton = null;
 
-    // --- SKY BLUE COLOR PALETTE ---
-    // Gradient: Xanh da trời đậm dần xuống dưới
-    private final Color SIDEBAR_TOP = new Color(56, 189, 248);    // Sky 400 (Sáng)
-    private final Color SIDEBAR_BOTTOM = new Color(2, 132, 199);  // Sky 600 (Đậm hơn chút)
-
-    // Màu chữ & Icon (Trắng toàn bộ để nổi trên nền xanh)
-    private final Color TEXT_IDLE = new Color(224, 242, 254);     // Sky 100 (Trắng hơi xanh)
-    private final Color TEXT_HOVER = Color.WHITE;                 // Trắng tinh
-    private final Color TEXT_ACTIVE = Color.WHITE;                // Trắng tinh
-
-    // Màu nền nút
-    private final Color BTN_HOVER_BG = new Color(255, 255, 255, 40); // Trắng mờ 40%
-    private final Color BTN_ACTIVE_BG = new Color(255, 255, 255, 60); // Trắng mờ 60%
-    private final Color ACCENT_BAR = Color.WHITE;                    // Thanh đánh dấu màu trắng
+    // Colors
+    private final Color SIDEBAR_TOP = new Color(56, 189, 248);
+    private final Color SIDEBAR_BOTTOM = new Color(2, 132, 199);
+    private final Color TEXT_IDLE = new Color(224, 242, 254);
+    private final Color TEXT_ACTIVE = Color.WHITE;
+    private final Color BTN_HOVER_BG = new Color(255, 255, 255, 40);
+    private final Color BTN_ACTIVE_BG = new Color(255, 255, 255, 60);
+    private final Color ACCENT_BAR = Color.WHITE;
 
     public MainDashboard() {
         this.permissionManager = PermissionManager.getInstance();
-
         initializeFrame();
         createSidebar();
         createContentArea();
-
-        // Mặc định vào Dashboard
+        
+        // Mặc định chọn Dashboard
         showDashboardPanel();
     }
 
@@ -76,17 +65,13 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
     }
 
     private void createSidebar() {
-        // 1. Sidebar Container (Gradient Xanh Dương)
         sidebarPanel = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                GradientPaint gp = new GradientPaint(
-                        0, 0, SIDEBAR_TOP,
-                        0, getHeight(), SIDEBAR_BOTTOM
-                );
+                GradientPaint gp = new GradientPaint(0, 0, SIDEBAR_TOP, 0, getHeight(), SIDEBAR_BOTTOM);
                 g2d.setPaint(gp);
                 g2d.fillRect(0, 0, getWidth(), getHeight());
             }
@@ -97,36 +82,33 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setOpaque(false);
-        topPanel.setBorder(new EmptyBorder(30, 20, 30, 20));
+        topPanel.setBorder(new EmptyBorder(30, 20, 20, 20));
 
-        // Logo Icon (Màu trắng)
         JLabel iconLabel = new JLabel(new HeaderIcon(48, Color.WHITE));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Logo Text (Màu trắng)
         JLabel titleLabel = new JLabel("QUẢN LÝ CHUNG CƯ");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setBorder(new EmptyBorder(10, 0, 0, 0));
+        titleLabel.setBorder(new EmptyBorder(10, 0, 15, 0));
 
         topPanel.add(iconLabel);
         topPanel.add(titleLabel);
 
+        // (Đã xóa Building Selector ở đây)
+
         sidebarPanel.add(topPanel, BorderLayout.NORTH);
 
-        // --- CENTER: MENU ITEMS ---
+        // --- CENTER: MENU ---
         JPanel menuPanel = new JPanel(new GridBagLayout());
         menuPanel.setOpaque(false);
-
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridx = 0; gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(4, 15, 4, 15);
         gbc.weightx = 1.0;
 
-        // Init Buttons
         btnDashboard = createMenuButton("Dashboard", "\u2637");
         btnBuildings = createMenuButton("Tòa Nhà", "\u25A3");
         btnResidents = createMenuButton("Cư Dân", "\u265B");
@@ -134,11 +116,9 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         btnServices = createMenuButton("Dịch Vụ", "\u26A1");
         btnInvoices = createMenuButton("Hóa Đơn", "\u263C");
         btnReports = createMenuButton("Báo Cáo", "\u2630");
-
         btnUsers = createMenuButton("Tài Khoản", "\u265F");
         btnMyStaff = createMenuButton("Nhân Viên", "👥");
 
-        // Add buttons
         addMenuButton(menuPanel, btnDashboard, gbc);
         addMenuButton(menuPanel, btnBuildings, gbc);
         addMenuButton(menuPanel, btnResidents, gbc);
@@ -147,10 +127,9 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         addMenuButton(menuPanel, btnInvoices, gbc);
         addMenuButton(menuPanel, btnReports, gbc);
 
-        // Separator
         if (permissionManager.isAdmin() || permissionManager.isManager()) {
             JSeparator sep = new JSeparator();
-            sep.setForeground(new Color(255, 255, 255, 80)); // Trắng mờ
+            sep.setForeground(new Color(255, 255, 255, 80));
             sep.setBackground(new Color(255, 255, 255, 80));
             gbc.insets = new Insets(15, 30, 15, 30);
             menuPanel.add(sep, gbc);
@@ -158,19 +137,11 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             gbc.gridy++;
         }
 
-        if (permissionManager.isAdmin()) {
-            addMenuButton(menuPanel, btnUsers, gbc);
-        }
-        if (permissionManager.isManager()) {
-            addMenuButton(menuPanel, btnMyStaff, gbc);
-        }
+        if (permissionManager.isAdmin()) addMenuButton(menuPanel, btnUsers, gbc);
+        if (permissionManager.isManager()) addMenuButton(menuPanel, btnMyStaff, gbc);
 
         gbc.weighty = 1.0;
-        menuPanel.add(new JPanel() {
-            {
-                setOpaque(false);
-            }
-        }, gbc);
+        menuPanel.add(new JPanel() {{ setOpaque(false); }}, gbc);
 
         JScrollPane scrollPane = new JScrollPane(menuPanel);
         scrollPane.setBorder(null);
@@ -179,12 +150,9 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(0, 0));
 
         sidebarPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // --- BOTTOM: USER PROFILE ---
         sidebarPanel.add(createUserProfile(), BorderLayout.SOUTH);
 
         add(sidebarPanel, BorderLayout.WEST);
-
         setupButtonActions();
         applyRoleBasedAccess();
     }
@@ -194,34 +162,23 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         gbc.gridy++;
     }
 
-    // =============================================================
-    // USER PROFILE (BLUE THEME)
-    // =============================================================
     private JPanel createUserProfile() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         String name = (currentUser != null) ? currentUser.getFullName() : "User";
         String role = (currentUser != null) ? currentUser.getRoleDisplayName() : "Role";
 
         JPanel userPanel = new JPanel(new GridBagLayout());
-        userPanel.setBackground(new Color(255, 255, 255, 30)); // Nền trắng mờ
+        userPanel.setBackground(new Color(255, 255, 255, 30));
         userPanel.setBorder(new EmptyBorder(15, 20, 15, 10));
         userPanel.setPreferredSize(new Dimension(280, 85));
 
         GridBagConstraints gbc = new GridBagConstraints();
-
-        // 1. Avatar
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridheight = 2;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridheight = 2;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 0, 0, 12);
         userPanel.add(new JLabel(new UserIcon(42)), gbc);
 
-        // 2. Name
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.gridheight = 1;
-        gbc.weightx = 1.0;
+        gbc.gridx = 1; gbc.gridy = 0; gbc.gridheight = 1; gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(2, 0, 0, 0);
         JLabel lblName = new JLabel(name);
@@ -229,19 +186,13 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         lblName.setForeground(Color.WHITE);
         userPanel.add(lblName, gbc);
 
-        // 3. Role
-        gbc.gridy = 1;
-        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 0, 0);
         JLabel lblRole = new JLabel(role);
         lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblRole.setForeground(new Color(224, 242, 254)); // Sky 100
+        lblRole.setForeground(new Color(224, 242, 254));
         userPanel.add(lblRole, gbc);
 
-        // 4. Settings Button - ✅ FIXED ICON
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.gridheight = 2;
-        gbc.weightx = 0;
+        gbc.gridx = 2; gbc.gridy = 0; gbc.gridheight = 2; gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.insets = new Insets(0, 5, 0, 0);
@@ -252,7 +203,6 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         btnSettings.setFocusPainted(false);
         btnSettings.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnSettings.addActionListener(e -> showUserMenu(btnSettings));
-
         userPanel.add(btnSettings, gbc);
 
         return userPanel;
@@ -266,23 +216,15 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         btnServices.addActionListener(e -> showServicesPanel());
         btnInvoices.addActionListener(e -> showInvoicesPanel());
         btnReports.addActionListener(e -> showReportsPanel());
-        if (btnUsers != null) {
-            btnUsers.addActionListener(e -> showUsersPanel());
-        }
-        if (btnMyStaff != null) {
-            btnMyStaff.addActionListener(e -> showMyStaffPanel());
-        }
+        if (btnUsers != null) btnUsers.addActionListener(e -> showUsersPanel());
+        if (btnMyStaff != null) btnMyStaff.addActionListener(e -> showMyStaffPanel());
     }
 
     private SidebarButton createMenuButton(String text, String icon) {
         return new SidebarButton(text, icon);
     }
 
-    // =============================================================
-    // CUSTOM BUTTON (BLUE THEME)
-    // =============================================================
     private class SidebarButton extends JButton {
-
         private boolean isSelected = false;
         private boolean isHovered = false;
         private String iconSymbol;
@@ -298,99 +240,62 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             setPreferredSize(new Dimension(240, 48));
 
             addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    isHovered = true;
-                    repaint();
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    isHovered = false;
-                    repaint();
-                }
+                @Override public void mouseEntered(MouseEvent e) { isHovered = true; repaint(); }
+                @Override public void mouseExited(MouseEvent e) { isHovered = false; repaint(); }
             });
         }
 
-        public void setSelected(boolean selected) {
-            this.isSelected = selected;
-            repaint();
-        }
+        public void setSelected(boolean selected) { this.isSelected = selected; repaint(); }
 
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-            int w = getWidth();
-            int h = getHeight();
+            int w = getWidth(); int h = getHeight();
 
             if (isSelected) {
-                // Active BG (Trắng đục nổi bật trên nền xanh)
                 g2.setColor(BTN_ACTIVE_BG);
                 g2.fillRoundRect(0, 0, w, h, 12, 12);
-
-                // Active Marker (Thanh trắng bên trái)
                 g2.setColor(ACCENT_BAR);
                 g2.fillRoundRect(0, 10, 4, h - 20, 2, 2);
-
             } else if (isHovered) {
-                // Hover BG (Trắng mờ)
                 g2.setColor(BTN_HOVER_BG);
                 g2.fillRoundRect(0, 0, w, h, 12, 12);
             }
 
-            // Text & Icon Color
             Color fg = (isSelected || isHovered) ? TEXT_ACTIVE : TEXT_IDLE;
             g2.setColor(fg);
 
-            // Calculation for Centering
             Font iconFont = new Font("Segoe UI Symbol", Font.PLAIN, 18);
             Font textFont = getFont();
-
             FontMetrics fmText = g2.getFontMetrics(textFont);
             FontMetrics fmIcon = g2.getFontMetrics(iconFont);
 
-            String text = getText();
             int iconW = fmIcon.stringWidth(iconSymbol);
-            int textW = fmText.stringWidth(text);
+            int textW = fmText.stringWidth(getText());
             int gap = 12;
+            int startX = (w - (iconW + gap + textW)) / 2;
 
-            int totalContentWidth = iconW + gap + textW;
-            int startX = (w - totalContentWidth) / 2;
-
-            // Draw Icon
             g2.setFont(iconFont);
             g2.drawString(iconSymbol, startX, (h + fmIcon.getAscent() - 4) / 2);
-
-            // Draw Text
             g2.setFont(textFont);
-            g2.drawString(text, startX + iconW + gap, (h + fmText.getAscent() - 4) / 2);
-
+            g2.drawString(getText(), startX + iconW + gap, (h + fmText.getAscent() - 4) / 2);
             g2.dispose();
         }
     }
 
     private void setActiveMenuButton(SidebarButton activeButton) {
         SidebarButton[] allButtons = {btnDashboard, btnBuildings, btnResidents, btnContracts, btnServices, btnInvoices, btnReports, btnUsers, btnMyStaff};
-        for (SidebarButton btn : allButtons) {
-            if (btn != null) {
-                btn.setSelected(false);
-            }
-        }
+        for (SidebarButton btn : allButtons) { if (btn != null) btn.setSelected(false); }
         if (activeButton != null) {
             activeButton.setSelected(true);
             currentActiveButton = activeButton;
         }
     }
 
-    // =============================================================
-    // CONTENT & NAVIGATION
-    // =============================================================
     private void createContentArea() {
-        contentPanel = new JPanel();
-        contentPanel.setLayout(new BorderLayout());
+        contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(UIConstants.BACKGROUND_COLOR);
         add(contentPanel, BorderLayout.CENTER);
     }
@@ -403,17 +308,15 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         contentPanel.repaint();
     }
 
-    // --- Navigation Methods ---
     private void showDashboardPanel() {
+        // ✅ NEW: Không cần truyền buildingId từ MainDashboard nữa
         showPanel(new DashboardPanel(this), "Dashboard", btnDashboard);
     }
 
     public void showBuildingsPanel() {
         if (permissionManager.canAccess(PermissionManager.MODULE_BUILDINGS)) {
             showPanel(new BuildingManagementPanel(this::showFloorsOfBuilding), "Quản Lý Tòa Nhà", btnBuildings);
-        } else {
-            permissionManager.showAccessDeniedMessage(this, "truy cập Tòa Nhà");
-        }
+        } else { permissionManager.showAccessDeniedMessage(this, "truy cập Tòa Nhà"); }
     }
 
     public void showFloorsOfBuilding(Building building) {
@@ -421,9 +324,7 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             FloorManagementPanel floorPanel = new FloorManagementPanel(this::showApartmentsOfFloor);
             floorPanel.setBuilding(building);
             showPanel(floorPanel, "Quản Lý Tầng", btnBuildings);
-        } else {
-            permissionManager.showAccessDeniedMessage(this, "truy cập Tầng");
-        }
+        } else { permissionManager.showAccessDeniedMessage(this, "truy cập Tầng"); }
     }
 
     public void showApartmentsOfFloor(Floor floor) {
@@ -431,48 +332,26 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             ApartmentManagementPanel aptPanel = new ApartmentManagementPanel();
             aptPanel.setFloor(floor);
             showPanel(aptPanel, "Quản Lý Căn Hộ", btnBuildings);
-        } else {
-            permissionManager.showAccessDeniedMessage(this, "truy cập Căn Hộ");
-        }
+        } else { permissionManager.showAccessDeniedMessage(this, "truy cập Căn Hộ"); }
     }
 
     private void showResidentsPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_RESIDENTS)) {
-            showPanel(new ResidentManagementPanel(), "Quản Lý Cư Dân", btnResidents);
-        }
+        if (permissionManager.canAccess(PermissionManager.MODULE_RESIDENTS)) showPanel(new ResidentManagementPanel(), "Quản Lý Cư Dân", btnResidents);
     }
-
     private void showContractsPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_CONTRACTS)) {
-            showPanel(new ContractManagementPanel(), "Quản Lý Hợp Đồng", btnContracts);
-        }
+        if (permissionManager.canAccess(PermissionManager.MODULE_CONTRACTS)) showPanel(new ContractManagementPanel(), "Quản Lý Hợp Đồng", btnContracts);
     }
-
     private void showServicesPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_SERVICES)) {
-            showPanel(new ServiceManagementPanel(), "Quản Lý Dịch Vụ", btnServices);
-        }
+        if (permissionManager.canAccess(PermissionManager.MODULE_SERVICES)) showPanel(new ServiceManagementPanel(), "Quản Lý Dịch Vụ", btnServices);
     }
-
     private void showInvoicesPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_INVOICES)) {
-            showPanel(new InvoiceManagementPanel(), "Quản Lý Hóa Đơn", btnInvoices);
-        }
+        if (permissionManager.canAccess(PermissionManager.MODULE_INVOICES)) showPanel(new InvoiceManagementPanel(), "Quản Lý Hóa Đơn", btnInvoices);
     }
-
     private void showReportsPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_REPORTS)) {
-            showPanel(new ReportPanel(), "Báo Cáo", btnReports);
-        }
+        if (permissionManager.canAccess(PermissionManager.MODULE_REPORTS)) showPanel(new ReportPanel(), "Báo Cáo", btnReports);
     }
-
-    private void showUsersPanel() {
-        showPanel(new UserManagementPanel(), "Quản Lý Tài Khoản", btnUsers);
-    }
-
-    private void showMyStaffPanel() {
-        showPanel(new MyStaffPanel(), "Nhân Viên Thuộc Tòa", btnMyStaff);
-    }
+    private void showUsersPanel() { showPanel(new UserManagementPanel(), "Quản Lý Tài Khoản", btnUsers); }
+    private void showMyStaffPanel() { showPanel(new MyStaffPanel(), "Nhân Viên Thuộc Tòa", btnMyStaff); }
 
     private void applyRoleBasedAccess() {
         btnBuildings.setVisible(permissionManager.canAccess(PermissionManager.MODULE_BUILDINGS));
@@ -483,176 +362,78 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         btnReports.setVisible(permissionManager.canAccess(PermissionManager.MODULE_REPORTS));
     }
 
-    // --- User Menu ---
     private void showUserMenu(Component invoker) {
         JPopupMenu popup = new JPopupMenu();
         popup.setBackground(Color.WHITE);
         popup.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240)));
-
         JMenuItem changePass = new JMenuItem("Đổi mật khẩu");
         changePass.setBackground(Color.WHITE);
         changePass.addActionListener(e -> showChangePasswordDialog());
-
         JMenuItem logout = new JMenuItem("Đăng xuất");
         logout.setBackground(Color.WHITE);
-        logout.setForeground(new Color(225, 29, 72)); // Red
+        logout.setForeground(new Color(225, 29, 72));
         logout.addActionListener(e -> performLogout());
-
-        popup.add(changePass);
-        popup.addSeparator();
-        popup.add(logout);
-
+        popup.add(changePass); popup.addSeparator(); popup.add(logout);
         popup.show(invoker, -100, -70);
     }
 
     private void performLogout() {
-        int cf = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", JOptionPane.YES_NO_OPTION);
-        if (cf == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             SessionManager.getInstance().logout();
             new LoginFrame();
             dispose();
         }
     }
+    private void showChangePasswordDialog() { JOptionPane.showMessageDialog(this, "Chức năng đổi mật khẩu đang được cập nhật."); }
 
-    private void showChangePasswordDialog() {
-        JOptionPane.showMessageDialog(this, "Chức năng đổi mật khẩu đang được cập nhật.");
-    }
-
-    // ==================== ICONS (WHITE VERSION) ====================
+    // Icons classes (Giữ nguyên)
     private static class HeaderIcon implements Icon {
-
-        int size;
-        Color color;
-
-        public HeaderIcon(int size, Color color) {
-            this.size = size;
-            this.color = color;
-        }
-
-        public int getIconWidth() {
-            return size;
-        }
-
-        public int getIconHeight() {
-            return size;
-        }
-
+        int size; Color color;
+        public HeaderIcon(int size, Color color) { this.size = size; this.color = color; }
+        public int getIconWidth() { return size; }
+        public int getIconHeight() { return size; }
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(color);
             g2.fillRoundRect(x, y, size, size, 12, 12);
-            // Icon nội dung dùng màu nền Sidebar để đục lỗ
             g2.setColor(new Color(2, 132, 199));
             int p = size / 4;
             g2.fillRect(x + p, y + p, size / 2, size / 2);
-            g2.setColor(color);
-            g2.setStroke(new BasicStroke(2f));
+            g2.setColor(color); g2.setStroke(new BasicStroke(2f));
             g2.drawLine(x + size / 2, y + p, x + size / 2, y + size - p);
             g2.drawLine(x + p, y + size / 2, x + size - p, y + size / 2);
             g2.dispose();
         }
     }
-
     private static class UserIcon implements Icon {
-
-        int size;
-
-        public UserIcon(int size) {
-            this.size = size;
-        }
-
-        public int getIconWidth() {
-            return size;
-        }
-
-        public int getIconHeight() {
-            return size;
-        }
-
+        int size; public UserIcon(int size) { this.size = size; }
+        public int getIconWidth() { return size; } public int getIconHeight() { return size; }
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(255, 255, 255, 50)); // Nền tròn trắng mờ
-            g2.fillOval(x, y, size, size);
-            g2.setColor(Color.WHITE); // Hình người trắng
-            g2.setClip(new Ellipse2D.Float(x, y, size, size));
-            g2.fillOval(x + size / 4, y + size / 5, size / 2, size / 2); // Head
-            g2.fillOval(x + size / 6, y + size / 2 + size / 6, size * 2 / 3, size / 2); // Body
-            g2.dispose();
+            g2.setColor(new Color(255, 255, 255, 50)); g2.fillOval(x, y, size, size);
+            g2.setColor(Color.WHITE); g2.setClip(new Ellipse2D.Float(x, y, size, size));
+            g2.fillOval(x + size / 4, y + size / 5, size / 2, size / 2);
+            g2.fillOval(x + size / 6, y + size / 2 + size / 6, size * 2 / 3, size / 2); g2.dispose();
         }
     }
-
-    // ✅ FIXED SETTINGS ICON (Vẽ bằng code)
     private static class SettingsIcon implements Icon {
-
-        int size;
-        Color color;
-
-        public SettingsIcon(int size, Color color) {
-            this.size = size;
-            this.color = color;
-        }
-
-        public int getIconWidth() {
-            return size;
-        }
-
-        public int getIconHeight() {
-            return size;
-        }
-
+        int size; Color color; public SettingsIcon(int size, Color color) { this.size = size; this.color = color; }
+        public int getIconWidth() { return size; } public int getIconHeight() { return size; }
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-
-            int dotSize = 4;
-            int centerX = x + size / 2 - dotSize / 2;
-            int startY = y + 4;
-            int gap = 6;
-
-            g2.fillOval(centerX, startY, dotSize, dotSize);
-            g2.fillOval(centerX, startY + gap, dotSize, dotSize);
-            g2.fillOval(centerX, startY + gap * 2, dotSize, dotSize);
-
-            g2.dispose();
+            g2.setColor(color); int dotSize = 4; int centerX = x + size / 2 - dotSize / 2; int startY = y + 4; int gap = 6;
+            g2.fillOval(centerX, startY, dotSize, dotSize); g2.fillOval(centerX, startY + gap, dotSize, dotSize); g2.fillOval(centerX, startY + gap * 2, dotSize, dotSize); g2.dispose();
         }
     }
 
-    // ==================== NAVIGATOR ====================
-    @Override
-    public void goToBuildings() {
-        showBuildingsPanel();
-    }
-
-    @Override
-    public void goToApartments() {
-        showBuildingsPanel();
-    }
-
-    @Override
-    public void goToResidents() {
-        showResidentsPanel();
-    }
-
-    @Override
-    public void goToContracts() {
-        showContractsPanel();
-    }
-
-    @Override
-    public void goToInvoices() {
-        showInvoicesPanel();
-    }
-
-    @Override
-    public void goToReports() {
-        showReportsPanel();
-    }
-
-    @Override
-    public void goToServices() {
-        showServicesPanel();
-    }
+    @Override public void goToBuildings() { showBuildingsPanel(); }
+    @Override public void goToApartments() { showBuildingsPanel(); }
+    @Override public void goToResidents() { showResidentsPanel(); }
+    @Override public void goToContracts() { showContractsPanel(); }
+    @Override public void goToInvoices() { showInvoicesPanel(); }
+    @Override public void goToReports() { showReportsPanel(); }
+    @Override public void goToServices() { showServicesPanel(); }
 }

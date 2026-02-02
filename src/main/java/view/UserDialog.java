@@ -139,7 +139,7 @@ public class UserDialog extends JDialog {
 
         // Role
         formPanel.add(createFieldLabel("Vai trò *"));
-        roleCombo = new JComboBox<>(new String[]{"ADMIN", "STAFF", "ACCOUNTANT"});
+        roleCombo = new JComboBox<>(new String[]{"ADMIN", "STAFF", "MANAGER"});
         roleCombo.setFont(UIConstants.FONT_REGULAR);
         roleCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         roleCombo.setAlignmentX(Component.LEFT_ALIGNMENT);

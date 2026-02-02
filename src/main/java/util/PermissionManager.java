@@ -3,13 +3,8 @@ package util;
 import model.User;
 
 /**
- * Permission Manager - RBAC (Role-Based Access Control) UPDATED: Phase 4 -
- * Building-based permissions UPDATED: Gộp ACCOUNTANT vào STAFF
- *
- * Roles: ADMIN, MANAGER, STAFF
- *
- * STAFF quyền: - Vận hành: Residents, Contracts, Services, Invoices (CRUD) -
- * View: Buildings, Floors, Apartments - NO access: Reports, My Staff
+ * Permission Manager - UPDATED for Many-to-Many Buildings
+ * RBAC (Role-Based Access Control) với support nhiều buildings
  */
 public class PermissionManager {
 
@@ -52,43 +47,48 @@ public class PermissionManager {
         return user != null ? user.getRole() : null;
     }
 
-    // ==================== BUILDING FILTER ====================
+    // ==================== BUILDING FILTER (UPDATED) ====================
+
     /**
-     * Get building filter for current user.
-     *
-     * @return NULL for ADMIN (sees all), building_id for MANAGER/STAFF
+     * ✅ DEPRECATED: Trả về building đầu tiên (backward compat)
+     * Dùng getBuildingIds() cho nhiều buildings
      */
+    @Deprecated
     public Long getBuildingFilter() {
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return null;
+        if (currentUser == null) return null;
+        if (currentUser.isAdmin()) return null;
+        return currentUser.getBuildingId(); // Returns first building
+    }
+
+    /**
+     * ✅ NEW: Lấy tất cả building IDs của user
+     */
+    public java.util.List<Long> getBuildingIds() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null || currentUser.isAdmin()) {
+            return null; // ADMIN sees all
         }
-        if (currentUser.isAdmin()) {
-            return null;
-        }
-        return currentUser.getBuildingId();
+        return currentUser.getBuildingIds();
     }
 
     /**
      * Check if current user can access a specific building.
+     * ✅ UPDATED: Dùng List.contains() thay vì ==
      */
     public boolean canAccessBuilding(Long buildingId) {
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return false;
-        }
+        if (currentUser == null) return false;
         return currentUser.canAccessBuilding(buildingId);
     }
 
     /**
-     * MANAGER có thể quản lý STAFF của tòa mình. ADMIN không cần — dùng
-     * UserManagementPanel riêng.
+     * MANAGER có thể quản lý STAFF của tòa mình.
+     * ADMIN không cần — dùng UserManagementPanel riêng.
      */
     public boolean canManageStaff() {
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return false;
-        }
+        if (currentUser == null) return false;
         return currentUser.canManageStaff();
     }
 
@@ -97,25 +97,22 @@ public class PermissionManager {
      */
     public boolean canManageManagers() {
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return false;
-        }
+        if (currentUser == null) return false;
         return currentUser.canManageManagers();
     }
 
     // ==================== ACCESS (MENU / VIEW) ====================
+
     /**
      * Kiểm tra role có quyền truy cập module chưa.
-     *
-     * ADMIN → tất cả MANAGER → Buildings, Floors, Apartments, Residents,
-     * Contracts, MyStaff, Reports STAFF → Buildings, Floors, Apartments,
-     * Residents, Contracts, Services, Invoices
+     * 
+     * ADMIN → tất cả
+     * MANAGER → Buildings, Floors, Apartments, Residents, Contracts, MyStaff, Reports
+     * STAFF → Buildings, Floors, Apartments, Residents, Contracts, Services, Invoices
      */
     public boolean canAccess(String module) {
         String role = getCurrentRole();
-        if (role == null) {
-            return false;
-        }
+        if (role == null) return false;
 
         if (ROLE_ADMIN.equalsIgnoreCase(role)) {
             return true;
@@ -157,15 +154,15 @@ public class PermissionManager {
     }
 
     // ==================== CRUD ====================
+
     /**
-     * ADMIN → tất cả modules MANAGER → Floors, Apartments, MyStaff STAFF →
-     * Residents, Contracts, Services, Invoices
+     * ADMIN → tất cả modules
+     * MANAGER → Floors, Apartments, MyStaff
+     * STAFF → Residents, Contracts, Services, Invoices
      */
     public boolean canAdd(String module) {
         String role = getCurrentRole();
-        if (role == null) {
-            return false;
-        }
+        if (role == null) return false;
 
         if (ROLE_ADMIN.equalsIgnoreCase(role)) {
             return true;
@@ -196,6 +193,7 @@ public class PermissionManager {
     }
 
     // ==================== ROLE HELPERS ====================
+
     public boolean isAdmin() {
         return ROLE_ADMIN.equalsIgnoreCase(getCurrentRole());
     }
@@ -208,7 +206,8 @@ public class PermissionManager {
         return ROLE_STAFF.equalsIgnoreCase(getCurrentRole());
     }
 
-    // ==================== UI HELPERS ====================
+    // ==================== UI HELPERS (UPDATED) ====================
+
     public void showAccessDeniedMessage(java.awt.Component parent, String action) {
         javax.swing.JOptionPane.showMessageDialog(
                 parent,
@@ -220,23 +219,23 @@ public class PermissionManager {
     }
 
     /**
-     * @return Tên tòa nhà của user hiện tại, hoặc "Tất cả tòa nhà" nếu ADMIN.
+     * ✅ UPDATED: Hiển thị tất cả tòa nhà của user (comma-separated)
+     * @return Tên tòa nhà hoặc "Tất cả tòa nhà" nếu ADMIN
      */
     public String getCurrentBuildingDisplay() {
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return "N/A";
-        }
+        if (currentUser == null) return "N/A";
 
         if (currentUser.isAdmin()) {
             return "Tất cả tòa nhà";
         }
 
-        if (currentUser.getBuildingName() != null) {
-            return currentUser.getBuildingName();
+        if (currentUser.getBuildingNames() != null && !currentUser.getBuildingNames().isEmpty()) {
+            return String.join(", ", currentUser.getBuildingNames());
         }
-        if (currentUser.getBuildingId() != null) {
-            return "Tòa ID: " + currentUser.getBuildingId();
+
+        if (currentUser.hasBuilding()) {
+            return "Tòa ID: " + currentUser.getBuildingIds();
         }
 
         return "Chưa gán tòa";
@@ -244,7 +243,7 @@ public class PermissionManager {
 
     /**
      * Validate + show dialog nếu không có quyền.
-     *
+     * 
      * @return true nếu được cho phép
      */
     public boolean validateBuildingAccess(Long buildingId, String action, java.awt.Component parent) {
