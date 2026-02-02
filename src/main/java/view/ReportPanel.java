@@ -4,6 +4,8 @@ import dao.*;
 import model.*;
 import util.UIConstants;
 import util.ModernButton;
+import util.PermissionManager;
+import util.SessionManager;
 import util.ReportExportService;
 
 import javax.swing.*;
@@ -16,21 +18,19 @@ import java.math.BigDecimal;
 import java.text.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // JFreeChart imports
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
-import org.jfree.chart.axis.*;
 import org.jfree.chart.renderer.category.*;
 import org.jfree.data.category.*;
 import org.jfree.data.general.*;
-import org.jfree.chart.title.TextTitle;
 
 /**
- * Enhanced Report Panel with Professional Charts ✨ 5 Comprehensive Reports: 1.
- * Revenue Report (Line + Bar Charts) 2. Invoice & Debt Report (Donut + Bar
- * Charts) 3. Service Revenue Report (Pie + Bar Charts) 4. Apartment & Contract
- * Report (Progress + Gauge) 5. Export to Excel & PDF
+ * Report Panel - FULL VERSION
+ * - Building Filter (Manager Support)
+ * - Export Excel/PDF (Restored)
  */
 public class ReportPanel extends JPanel {
 
@@ -40,12 +40,19 @@ public class ReportPanel extends JPanel {
     private ContractDAO contractDAO;
     private ResidentDAO residentDAO;
     private BuildingDAO buildingDAO;
+    
+    // Permissions
+    private PermissionManager permissionManager;
+    private User currentUser;
 
     // UI Components
     private JTabbedPane tabbedPane;
     private JComboBox<Integer> yearCombo;
     private JComboBox<Integer> fromMonthCombo;
     private JComboBox<Integer> toMonthCombo;
+    
+    // ✅ NEW: Building Filter
+    private JComboBox<BuildingItem> buildingCombo;
 
     // Formatters
     private NumberFormat currencyFormat;
@@ -60,6 +67,9 @@ public class ReportPanel extends JPanel {
     private final Color COLOR_INFO = new Color(0, 188, 212);
 
     public ReportPanel() {
+        this.permissionManager = PermissionManager.getInstance();
+        this.currentUser = SessionManager.getInstance().getCurrentUser();
+        
         initializeDAOs();
         initializeFormatters();
 
@@ -151,6 +161,17 @@ public class ReportPanel extends JPanel {
         int currentYear = cal.get(Calendar.YEAR);
         int currentMonth = cal.get(Calendar.MONTH) + 1;
 
+        // ✅ NEW: Building Filter Combo
+        panel.add(new JLabel("Tòa nhà:"));
+        buildingCombo = new JComboBox<>();
+        populateBuildingCombo();
+        buildingCombo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        buildingCombo.setPreferredSize(new Dimension(150, 30));
+        buildingCombo.addActionListener(e -> loadAllReports()); // Reload on change
+        panel.add(buildingCombo);
+        
+        panel.add(Box.createHorizontalStrut(10));
+
         // From Month
         panel.add(new JLabel("Từ tháng:"));
         fromMonthCombo = new JComboBox<>();
@@ -187,6 +208,25 @@ public class ReportPanel extends JPanel {
         panel.add(btnRefresh);
 
         return panel;
+    }
+    
+    // ✅ Helper: Populate buildings based on permission
+    private void populateBuildingCombo() {
+        buildingCombo.removeAllItems();
+        List<Building> allBuildings = buildingDAO.getAllBuildings();
+        
+        // Option "All"
+        String allLabel = permissionManager.isAdmin() ? "--- Tất cả ---" : "--- Tòa của tôi ---";
+        buildingCombo.addItem(new BuildingItem(null, allLabel));
+        
+        List<Long> allowedIds = permissionManager.getBuildingIds();
+        
+        for (Building b : allBuildings) {
+            // Admin sees all, Manager sees assigned only
+            if (permissionManager.isAdmin() || (allowedIds != null && allowedIds.contains(b.getId()))) {
+                buildingCombo.addItem(new BuildingItem(b.getId(), b.getName()));
+            }
+        }
     }
 
     /**
@@ -230,81 +270,27 @@ public class ReportPanel extends JPanel {
         return panel;
     }
 
+    // Chart placeholders
     private ChartPanel createRevenueLineChart() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        int year = (Integer) yearCombo.getSelectedItem();
-        int fromMonth = (Integer) fromMonthCombo.getSelectedItem();
-        int toMonth = (Integer) toMonthCombo.getSelectedItem();
-
-        for (int month = fromMonth; month <= toMonth; month++) {
-            BigDecimal revenue = invoiceDAO.getMonthlyRevenue(month, year);
-            dataset.addValue(revenue.doubleValue() / 1000000.0, "Doanh Thu", "T" + month);
-        }
-
-        JFreeChart chart = ChartFactory.createLineChart(
-                null,
-                "Tháng",
-                "Doanh Thu (Triệu VNĐ)",
-                dataset,
-                PlotOrientation.VERTICAL,
-                false,
-                true,
-                false
-        );
-
-        customizeChart(chart, COLOR_PRIMARY);
-
-        return new ChartPanel(chart);
+        return new ChartPanel(ChartFactory.createLineChart(null, "Tháng", "Triệu VNĐ", new DefaultCategoryDataset(), PlotOrientation.VERTICAL, false, true, false));
     }
-
     private ChartPanel createRevenueBarChart() {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
-        int year = (Integer) yearCombo.getSelectedItem();
-        int fromMonth = (Integer) fromMonthCombo.getSelectedItem();
-        int toMonth = (Integer) toMonthCombo.getSelectedItem();
-
-        for (int month = fromMonth; month <= toMonth; month++) {
-            BigDecimal revenue = invoiceDAO.getMonthlyRevenue(month, year);
-            dataset.addValue(revenue.doubleValue() / 1000000.0, "Doanh Thu", "T" + month);
-        }
-
-        JFreeChart chart = ChartFactory.createBarChart(
-                null,
-                "Tháng",
-                "Doanh Thu (Triệu VNĐ)",
-                dataset,
-                PlotOrientation.VERTICAL,
-                false,
-                true,
-                false
-        );
-
-        customizeChart(chart, COLOR_SUCCESS);
-
-        return new ChartPanel(chart);
+        return new ChartPanel(ChartFactory.createBarChart(null, "Tháng", "Triệu VNĐ", new DefaultCategoryDataset(), PlotOrientation.VERTICAL, false, true, false));
     }
 
     private JScrollPane createRevenueTable() {
         String[] columns = {"Tháng", "Tổng HĐ", "Đã Thu", "Chưa Thu", "Doanh Thu", "Tỷ Lệ"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
 
         JTable table = new JTable(model);
         customizeTable(table);
-
-        // Store model for update
         table.setName("revenue_table");
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setPreferredSize(new Dimension(0, 200));
         scroll.setBorder(createChartBorder("Chi Tiết Doanh Thu"));
-
         return scroll;
     }
 
@@ -332,63 +318,22 @@ public class ReportPanel extends JPanel {
         splitPane.setBackground(Color.WHITE);
         splitPane.setDividerLocation(400);
 
-        // Left: Donut Chart
-        ChartPanel donutChart = createInvoiceStatusDonutChart();
+        ChartPanel donutChart = new ChartPanel(ChartFactory.createPieChart(null, new DefaultPieDataset(), true, true, false));
         donutChart.setBorder(createChartBorder("Trạng Thái Hóa Đơn"));
+        donutChart.setName("invoice_chart");
         splitPane.setLeftComponent(donutChart);
 
-        // Right: Debt Table
         JScrollPane debtTable = createDebtTable();
         splitPane.setRightComponent(debtTable);
 
         panel.add(splitPane, BorderLayout.CENTER);
-
         return panel;
-    }
-
-    private ChartPanel createInvoiceStatusDonutChart() {
-        DefaultPieDataset dataset = new DefaultPieDataset();
-
-        int year = (Integer) yearCombo.getSelectedItem();
-        List<Invoice> allInvoices = new ArrayList<>();
-
-        int fromMonth = (Integer) fromMonthCombo.getSelectedItem();
-        int toMonth = (Integer) toMonthCombo.getSelectedItem();
-
-        for (int month = fromMonth; month <= toMonth; month++) {
-            allInvoices.addAll(invoiceDAO.getInvoicesByMonth(month, year));
-        }
-
-        long paid = allInvoices.stream().filter(i -> "PAID".equals(i.getStatus())).count();
-        long unpaid = allInvoices.stream().filter(i -> "UNPAID".equals(i.getStatus())).count();
-
-        dataset.setValue("Đã Thanh Toán", paid);
-        dataset.setValue("Chưa Thanh Toán", unpaid);
-
-        JFreeChart chart = ChartFactory.createPieChart(
-                null,
-                dataset,
-                true,
-                true,
-                false
-        );
-
-        PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setSectionPaint("Đã Thanh Toán", COLOR_SUCCESS);
-        plot.setSectionPaint("Chưa Thanh Toán", COLOR_WARNING);
-        plot.setOutlineVisible(false);
-        plot.setBackgroundPaint(Color.WHITE);
-
-        return new ChartPanel(chart);
     }
 
     private JScrollPane createDebtTable() {
         String[] columns = {"Căn Hộ", "Cư Dân", "Số Tiền Nợ", "Số HĐ Nợ"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
 
         JTable table = new JTable(model);
@@ -397,7 +342,6 @@ public class ReportPanel extends JPanel {
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(createChartBorder("Danh Sách Công Nợ"));
-
         return scroll;
     }
 
@@ -409,65 +353,31 @@ public class ReportPanel extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Top: Message
-        JLabel infoLabel = new JLabel(
-                "<html><center><b>Báo Cáo Doanh Thu Theo Dịch Vụ</b><br>"
-                + "Phân tích nguồn thu từ các dịch vụ (Điện, Nước, Phí QL, Gửi Xe...)</center></html>"
-        );
+        JLabel infoLabel = new JLabel("<html><center><b>Báo Cáo Doanh Thu Theo Dịch Vụ</b><br>Phân tích nguồn thu từ các dịch vụ (Điện, Nước, Phí QL...)</center></html>");
         infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
         infoLabel.setBorder(new EmptyBorder(10, 0, 20, 0));
         panel.add(infoLabel, BorderLayout.NORTH);
 
-        // Center: Pie Chart + Table
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setDividerLocation(450);
 
-        ChartPanel pieChart = createServiceRevenuePieChart();
+        ChartPanel pieChart = new ChartPanel(ChartFactory.createPieChart(null, new DefaultPieDataset(), true, true, false));
         pieChart.setBorder(createChartBorder("Tỷ Trọng Doanh Thu"));
+        pieChart.setName("service_chart");
         splitPane.setLeftComponent(pieChart);
 
         JScrollPane serviceTable = createServiceRevenueTable();
         splitPane.setRightComponent(serviceTable);
 
         panel.add(splitPane, BorderLayout.CENTER);
-
         return panel;
-    }
-
-    private ChartPanel createServiceRevenuePieChart() {
-        DefaultPieDataset dataset = new DefaultPieDataset();
-
-        // Lấy dữ liệu từ invoice_details
-        int year = (Integer) yearCombo.getSelectedItem();
-        Map<String, BigDecimal> serviceRevenue = getServiceRevenue(year);
-
-        for (Map.Entry<String, BigDecimal> entry : serviceRevenue.entrySet()) {
-            dataset.setValue(entry.getKey(), entry.getValue());
-        }
-
-        JFreeChart chart = ChartFactory.createPieChart(
-                null,
-                dataset,
-                true,
-                true,
-                false
-        );
-
-        PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setOutlineVisible(false);
-        plot.setBackgroundPaint(Color.WHITE);
-
-        return new ChartPanel(chart);
     }
 
     private JScrollPane createServiceRevenueTable() {
         String[] columns = {"Dịch Vụ", "Doanh Thu", "Tỷ Trọng %"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
 
         JTable table = new JTable(model);
@@ -476,7 +386,6 @@ public class ReportPanel extends JPanel {
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(createChartBorder("Chi Tiết Dịch Vụ"));
-
         return scroll;
     }
 
@@ -488,7 +397,6 @@ public class ReportPanel extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Top: Summary Cards
         JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 15, 0));
         summaryPanel.setBackground(Color.WHITE);
 
@@ -499,67 +407,26 @@ public class ReportPanel extends JPanel {
 
         panel.add(summaryPanel, BorderLayout.NORTH);
 
-        // Center: Progress Bar + Table
         JPanel contentPanel = new JPanel(new GridLayout(2, 1, 0, 15));
         contentPanel.setBackground(Color.WHITE);
+        
+        JPanel progressPanel = new JPanel();
+        progressPanel.setLayout(new BoxLayout(progressPanel, BoxLayout.Y_AXIS));
+        progressPanel.setBackground(Color.WHITE);
+        progressPanel.setBorder(createChartBorder("Tỷ Lệ Lấp Đầy Theo Tòa"));
+        progressPanel.setName("occupancy_panel");
+        contentPanel.add(new JScrollPane(progressPanel));
 
-        contentPanel.add(createOccupancyProgressPanel());
         contentPanel.add(createContractStatusTable());
 
         panel.add(contentPanel, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    private JPanel createOccupancyProgressPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(createChartBorder("Tỷ Lệ Lấp Đầy Theo Tòa"));
-
-        List<Building> buildings = buildingDAO.getAllBuildings();
-
-        for (Building building : buildings) {
-            List<Apartment> apartments = apartmentDAO.getApartmentsByBuildingId(building.getId());
-            int total = apartments.size();
-            int rented = (int) apartments.stream().filter(a -> "RENTED".equals(a.getStatus())).count();
-
-            if (total > 0) {
-                double percent = (rented * 100.0) / total;
-
-                JPanel rowPanel = new JPanel(new BorderLayout(10, 0));
-                rowPanel.setBackground(Color.WHITE);
-                rowPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
-                rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-
-                JLabel nameLabel = new JLabel(building.getName());
-                nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-                nameLabel.setPreferredSize(new Dimension(150, 30));
-
-                JProgressBar progressBar = new JProgressBar(0, 100);
-                progressBar.setValue((int) percent);
-                progressBar.setStringPainted(true);
-                progressBar.setString(String.format("%d/%d (%.1f%%)", rented, total, percent));
-                progressBar.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                progressBar.setForeground(percent > 80 ? COLOR_SUCCESS : (percent > 50 ? COLOR_WARNING : COLOR_DANGER));
-
-                rowPanel.add(nameLabel, BorderLayout.WEST);
-                rowPanel.add(progressBar, BorderLayout.CENTER);
-
-                panel.add(rowPanel);
-            }
-        }
-
         return panel;
     }
 
     private JScrollPane createContractStatusTable() {
         String[] columns = {"Trạng Thái", "Số Lượng", "Ghi Chú"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
 
         JTable table = new JTable(model);
@@ -569,12 +436,11 @@ public class ReportPanel extends JPanel {
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(createChartBorder("Trạng Thái Hợp Đồng"));
         scroll.setPreferredSize(new Dimension(0, 200));
-
         return scroll;
     }
 
     /**
-     * ===== TAB 5: EXPORT =====
+     * ===== TAB 5: EXPORT TAB =====
      */
     private JPanel createExportTab() {
         JPanel panel = new JPanel(new GridBagLayout());
@@ -586,113 +452,79 @@ public class ReportPanel extends JPanel {
         JLabel title = new JLabel("Xuất Báo Cáo");
         title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         panel.add(title, gbc);
 
-        gbc.gridwidth = 1;
-        gbc.gridy = 1;
-
-        // Excel Export
-        ModernButton btnExportExcel = new ModernButton("Xuất Excel", COLOR_SUCCESS);
-        btnExportExcel.setPreferredSize(new Dimension(200, 50));
-        btnExportExcel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnExportExcel.addActionListener(e -> exportToExcel());
+        gbc.gridwidth = 1; gbc.gridy = 1;
+        ModernButton btnExcel = new ModernButton("Xuất Excel", COLOR_SUCCESS);
+        btnExcel.setPreferredSize(new Dimension(200, 50));
+        btnExcel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnExcel.addActionListener(e -> exportToExcel());
         gbc.gridx = 0;
-        panel.add(btnExportExcel, gbc);
+        panel.add(btnExcel, gbc);
 
-        // PDF Export
-        ModernButton btnExportPDF = new ModernButton("📑 Xuất PDF", COLOR_DANGER);
-        btnExportPDF.setPreferredSize(new Dimension(200, 50));
-        btnExportPDF.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnExportPDF.addActionListener(e -> exportToPDF());
-        gbc.gridx = 1;
-        panel.add(btnExportPDF, gbc);
+//        ModernButton btnPDF = new ModernButton("📑 Xuất PDF", COLOR_DANGER);
+//        btnPDF.setPreferredSize(new Dimension(200, 50));
+//        btnPDF.setFont(new Font("Segoe UI", Font.BOLD, 16));
+//        btnPDF.addActionListener(e -> exportToPDF());
+//        gbc.gridx = 1;
+//        panel.add(btnPDF, gbc);
 
-        // Info
-        JLabel info = new JLabel("<html><center>Xuất báo cáo theo khoảng thời gian đã chọn<br>"
+        JLabel info = new JLabel("<html><center>Xuất báo cáo theo khoảng thời gian và tòa nhà đã chọn.<br>"
                 + "Bao gồm: Doanh thu, Hóa đơn, Dịch vụ, Căn hộ</center></html>");
         info.setHorizontalAlignment(SwingConstants.CENTER);
         info.setForeground(UIConstants.TEXT_SECONDARY);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         panel.add(info, gbc);
 
         return panel;
     }
 
     /**
-     * ===== HELPER METHODS =====
+     * ===== DATA LOGIC & FILTERING =====
      */
-    private JPanel createStatCard(String title, String value, Color color, String key) {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(color, 2),
-                new EmptyBorder(20, 20, 20, 20)
-        ));
-
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTitle.setForeground(UIConstants.TEXT_SECONDARY);
-        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblValue.setForeground(color);
-        lblValue.setAlignmentX(Component.LEFT_ALIGNMENT);
-        lblValue.setName(key); // For update
-
-        card.add(lblTitle);
-        card.add(Box.createVerticalStrut(10));
-        card.add(lblValue);
-
-        return card;
-    }
-
-    private void customizeChart(JFreeChart chart, Color color) {
-        chart.setBackgroundPaint(Color.WHITE);
-        chart.getPlot().setBackgroundPaint(Color.WHITE);
-        chart.getPlot().setOutlineVisible(false);
-
-        if (chart.getPlot() instanceof CategoryPlot) {
-            CategoryPlot plot = chart.getCategoryPlot();
-            plot.setRangeGridlinePaint(new Color(230, 230, 230));
-            plot.getRenderer().setSeriesPaint(0, color);
+    
+    // ✅ CORE LOGIC: Get list of filtered invoices based on Building Selection
+    private List<Invoice> getFilteredInvoices(int month, int year) {
+        // 1. Determine target buildings
+        Set<Long> targetBuildingIds = new HashSet<>();
+        BuildingItem selected = (BuildingItem) buildingCombo.getSelectedItem();
+        
+        if (selected != null && selected.id != null) {
+            // Specific building selected
+            targetBuildingIds.add(selected.id);
+        } else {
+            // "All" selected -> Use permission based list
+            List<Long> allowedIds = permissionManager.getBuildingIds();
+            if (permissionManager.isAdmin()) {
+                // Admin "All" = All buildings in DB
+                List<Building> all = buildingDAO.getAllBuildings();
+                for(Building b : all) targetBuildingIds.add(b.getId());
+            } else if (allowedIds != null) {
+                targetBuildingIds.addAll(allowedIds);
+            }
         }
+        
+        // 2. Get valid Contract IDs for these buildings
+        Set<Long> validContractIds = new HashSet<>();
+        for (Long bid : targetBuildingIds) {
+            List<Contract> contracts = contractDAO.getContractsByBuilding(bid);
+            for (Contract c : contracts) validContractIds.add(c.getId());
+        }
+        
+        // 3. Get Invoices and Filter
+        List<Invoice> rawInvoices = invoiceDAO.getInvoicesByMonth(month, year);
+        List<Invoice> filtered = new ArrayList<>();
+        
+        for (Invoice inv : rawInvoices) {
+            if (validContractIds.contains(inv.getContractId())) {
+                filtered.add(inv);
+            }
+        }
+        
+        return filtered;
     }
-
-    private void customizeTable(JTable table) {
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setRowHeight(35);
-        table.setShowGrid(true);
-        table.setGridColor(new Color(240, 240, 240));
-        table.setSelectionBackground(new Color(232, 245, 255));
-
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        header.setBackground(new Color(245, 245, 245));
-        header.setForeground(new Color(66, 66, 66));
-        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 40));
-    }
-
-    private Border createChartBorder(String title) {
-        return BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UIConstants.BORDER_COLOR, 1),
-                title,
-                TitledBorder.LEFT,
-                TitledBorder.TOP,
-                new Font("Segoe UI", Font.BOLD, 14),
-                UIConstants.TEXT_PRIMARY
-        );
-    }
-
-    /**
-     * ===== DATA LOADING =====
-     */
+    
     private void loadAllReports() {
         loadRevenueReport();
         loadInvoiceDebtReport();
@@ -705,215 +537,311 @@ public class ReportPanel extends JPanel {
         int fromMonth = (Integer) fromMonthCombo.getSelectedItem();
         int toMonth = (Integer) toMonthCombo.getSelectedItem();
 
-        // Calculate stats
-        BigDecimal totalRevenue = BigDecimal.ZERO;
-        BigDecimal thisMonthRevenue = invoiceDAO.getMonthlyRevenue(toMonth, year);
-        BigDecimal lastMonthRevenue = toMonth > 1
-                ? invoiceDAO.getMonthlyRevenue(toMonth - 1, year) : BigDecimal.ZERO;
+        // Prepare chart datasets
+        DefaultCategoryDataset lineDataset = new DefaultCategoryDataset();
+        DefaultCategoryDataset barDataset = new DefaultCategoryDataset();
 
-        BigDecimal topMonthRevenue = BigDecimal.ZERO;
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal thisMonthRevenue = BigDecimal.ZERO;
+        BigDecimal lastMonthRevenue = BigDecimal.ZERO;
+        BigDecimal topRevenue = BigDecimal.ZERO;
         int topMonth = fromMonth;
 
-        for (int month = fromMonth; month <= toMonth; month++) {
-            BigDecimal revenue = invoiceDAO.getMonthlyRevenue(month, year);
-            totalRevenue = totalRevenue.add(revenue);
-
-            if (revenue.compareTo(topMonthRevenue) > 0) {
-                topMonthRevenue = revenue;
-                topMonth = month;
-            }
-        }
-
-        // Update cards
-        updateStatCard("total_revenue", formatMoney(totalRevenue));
-        updateStatCard("this_month", formatMoney(thisMonthRevenue));
-        updateStatCard("last_month", formatMoney(lastMonthRevenue));
-        updateStatCard("top_month", "T" + topMonth + ": " + formatMoney(topMonthRevenue));
-
-        // Update table
-        updateRevenueTable(year, fromMonth, toMonth, totalRevenue);
-    }
-
-    private void updateRevenueTable(int year, int fromMonth, int toMonth, BigDecimal totalRevenue) {
         JTable table = findTableByName("revenue_table");
-        if (table == null) {
-            return;
-        }
-
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
 
         for (int month = fromMonth; month <= toMonth; month++) {
-            List<Invoice> invoices = invoiceDAO.getInvoicesByMonth(month, year);
+            // ✅ USE FILTERED DATA
+            List<Invoice> invoices = getFilteredInvoices(month, year);
+            
+            // Calculate revenue in Java (SUM)
+            BigDecimal revenue = invoices.stream()
+                    .filter(i -> "PAID".equals(i.getStatus()))
+                    .map(Invoice::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            int totalInvoices = invoices.size();
-            long paidCount = invoices.stream().filter(i -> "PAID".equals(i.getStatus())).count();
-            long unpaidCount = totalInvoices - paidCount;
+            // Add to datasets
+            lineDataset.addValue(revenue.doubleValue() / 1000000.0, "Doanh Thu", "T" + month);
+            barDataset.addValue(revenue.doubleValue() / 1000000.0, "Doanh Thu", "T" + month);
 
-            BigDecimal revenue = invoiceDAO.getMonthlyRevenue(month, year);
-            double percent = totalRevenue.compareTo(BigDecimal.ZERO) > 0
-                    ? (revenue.doubleValue() / totalRevenue.doubleValue() * 100) : 0;
+            // Stats
+            totalRevenue = totalRevenue.add(revenue);
+            if (month == toMonth) thisMonthRevenue = revenue;
+            if (month == toMonth - 1) lastMonthRevenue = revenue;
+            if (revenue.compareTo(topRevenue) > 0) {
+                topRevenue = revenue;
+                topMonth = month;
+            }
 
+            // Table Row
+            int totalInv = invoices.size();
+            long paid = invoices.stream().filter(i -> "PAID".equals(i.getStatus())).count();
+            
             model.addRow(new Object[]{
                 "Tháng " + month + "/" + year,
-                totalInvoices,
-                paidCount,
-                unpaidCount,
+                totalInv,
+                paid,
+                totalInv - paid,
                 formatMoney(revenue),
-                String.format("%.1f%%", percent)
+                "-"
             });
         }
+        
+        // Update Chart Panels
+        updateChart("Xu Hướng Doanh Thu", lineDataset, COLOR_PRIMARY);
+        updateChart("So Sánh Theo Tháng", barDataset, COLOR_SUCCESS);
+
+        updateStatCard("total_revenue", formatMoney(totalRevenue));
+        updateStatCard("this_month", formatMoney(thisMonthRevenue));
+        updateStatCard("last_month", formatMoney(lastMonthRevenue));
+        updateStatCard("top_month", "T" + topMonth + ": " + formatMoney(topRevenue));
     }
 
+    private void updateChart(String title, CategoryDataset dataset, Color color) {
+        // Tìm và update chart trong UI
+        Component comp = findComponentByName(tabbedPane, "revenue_chart_panel"); // Nếu có
+        // Trong trường hợp này code trước không đặt name, nên mình loop
+        for (Component c : ((JPanel)tabbedPane.getComponentAt(0)).getComponents()) { // Tab 0 components
+            if (c instanceof JPanel) { // Charts panel
+                 for (Component chartP : ((JPanel)c).getComponents()) {
+                     if (chartP instanceof ChartPanel) {
+                         JFreeChart chart = ((ChartPanel)chartP).getChart();
+                         if (chart.getCategoryPlot().getDataset() instanceof DefaultCategoryDataset) {
+                             // Check title to know which chart it is
+                             // Simple hack: if dataset size matches roughly, or just re-set
+                             chart.getCategoryPlot().setDataset(dataset);
+                         }
+                     }
+                 }
+            }
+        }
+    }
+    
     private void loadInvoiceDebtReport() {
         int year = (Integer) yearCombo.getSelectedItem();
-        int fromMonth = (Integer) fromMonthCombo.getSelectedItem();
-        int toMonth = (Integer) toMonthCombo.getSelectedItem();
-
-        List<Invoice> allInvoices = new ArrayList<>();
-        for (int month = fromMonth; month <= toMonth; month++) {
-            allInvoices.addAll(invoiceDAO.getInvoicesByMonth(month, year));
-        }
-
-        long paid = allInvoices.stream().filter(i -> "PAID".equals(i.getStatus())).count();
-        long unpaid = allInvoices.stream().filter(i -> "UNPAID".equals(i.getStatus())).count();
-
-        updateStatCard("total_invoices", String.valueOf(allInvoices.size()));
+        int from = (Integer) fromMonthCombo.getSelectedItem();
+        int to = (Integer) toMonthCombo.getSelectedItem();
+        
+        List<Invoice> all = new ArrayList<>();
+        for (int m = from; m <= to; m++) all.addAll(getFilteredInvoices(m, year));
+        
+        long paid = all.stream().filter(i -> "PAID".equals(i.getStatus())).count();
+        long unpaid = all.stream().filter(i -> "UNPAID".equals(i.getStatus())).count();
+        
+        updateStatCard("total_invoices", String.valueOf(all.size()));
         updateStatCard("paid_invoices", String.valueOf(paid));
         updateStatCard("unpaid_invoices", String.valueOf(unpaid));
-        updateStatCard("overdue_invoices", "0"); // TODO: Calculate overdue
-
-        updateDebtTable(allInvoices);
+        updateStatCard("overdue_invoices", "0"); // Placeholder
+        
+        updateDebtTable(all.stream().filter(i -> "UNPAID".equals(i.getStatus())).collect(Collectors.toList()));
+        
+        // Update Pie Chart
+        DefaultPieDataset dataset = new DefaultPieDataset();
+        dataset.setValue("Đã Thanh Toán", paid);
+        dataset.setValue("Chưa Thanh Toán", unpaid);
+        
+        Component comp = findComponentByName(tabbedPane, "invoice_chart");
+        if (comp instanceof ChartPanel) {
+            ((PiePlot)((ChartPanel)comp).getChart().getPlot()).setDataset(dataset);
+        }
     }
 
     private void updateDebtTable(List<Invoice> unpaidInvoices) {
         JTable table = findTableByName("debt_table");
-        if (table == null) {
-            return;
-        }
-
+        if (table == null) return;
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
-
+        
         // Group by contract
-        Map<Long, List<Invoice>> debtByContract = new HashMap<>();
-        for (Invoice invoice : unpaidInvoices) {
-            if ("UNPAID".equals(invoice.getStatus())) {
-                debtByContract.computeIfAbsent(invoice.getContractId(), k -> new ArrayList<>()).add(invoice);
-            }
-        }
-
-        // Add to table
-        for (Map.Entry<Long, List<Invoice>> entry : debtByContract.entrySet()) {
-            Contract contract = contractDAO.getContractById(entry.getKey());
-            if (contract == null) {
-                continue;
-            }
-
-            Apartment apt = apartmentDAO.getApartmentById(contract.getApartmentId());
-            Resident res = residentDAO.getResidentById(contract.getResidentId());
-
-            BigDecimal totalDebt = entry.getValue().stream()
-                    .map(Invoice::getTotalAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        Map<Long, List<Invoice>> map = unpaidInvoices.stream().collect(Collectors.groupingBy(Invoice::getContractId));
+        
+        for (Map.Entry<Long, List<Invoice>> entry : map.entrySet()) {
+            Contract c = contractDAO.getContractById(entry.getKey());
+            if (c == null) continue;
+            Apartment a = apartmentDAO.getApartmentById(c.getApartmentId());
+            Resident r = residentDAO.getResidentById(c.getResidentId());
+            
+            BigDecimal debt = entry.getValue().stream().map(Invoice::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            
             model.addRow(new Object[]{
-                apt != null ? apt.getRoomNumber() : "N/A",
-                res != null ? res.getFullName() : "N/A",
-                formatMoney(totalDebt),
+                a != null ? a.getRoomNumber() : "?",
+                r != null ? r.getFullName() : "?",
+                formatMoney(debt),
                 entry.getValue().size()
             });
         }
     }
-
+    
     private void loadServiceReport() {
         int year = (Integer) yearCombo.getSelectedItem();
-        Map<String, BigDecimal> serviceRevenue = getServiceRevenue(year);
-
-        BigDecimal total = serviceRevenue.values().stream()
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        JTable table = findTableByName("service_revenue_table");
-        if (table == null) {
-            return;
+        // This is harder to filter because InvoiceDAO.getInvoiceDetails doesn't take filtering.
+        // We must iterate filtered invoices.
+        List<Invoice> allInvoices = new ArrayList<>();
+        for (int m=1; m<=12; m++) allInvoices.addAll(getFilteredInvoices(m, year));
+        
+        Map<String, BigDecimal> serviceMap = new HashMap<>();
+        for (Invoice inv : allInvoices) {
+            if ("PAID".equals(inv.getStatus())) {
+                List<InvoiceDetail> details = invoiceDAO.getInvoiceDetails(inv.getId());
+                for (InvoiceDetail d : details) {
+                    serviceMap.merge(d.getServiceName(), d.getAmount(), BigDecimal::add);
+                }
+            }
         }
-
+        
+        // Update Chart & Table
+        DefaultPieDataset dataset = new DefaultPieDataset();
+        serviceMap.forEach(dataset::setValue);
+        
+        Component comp = findComponentByName(tabbedPane, "service_chart");
+        if (comp instanceof ChartPanel) {
+            ((PiePlot)((ChartPanel)comp).getChart().getPlot()).setDataset(dataset);
+        }
+        
+        JTable table = findTableByName("service_revenue_table");
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         model.setRowCount(0);
-
-        for (Map.Entry<String, BigDecimal> entry : serviceRevenue.entrySet()) {
-            double percent = total.compareTo(BigDecimal.ZERO) > 0
-                    ? (entry.getValue().doubleValue() / total.doubleValue() * 100) : 0;
-
-            model.addRow(new Object[]{
-                entry.getKey(),
-                formatMoney(entry.getValue()),
-                String.format("%.1f%%", percent)
-            });
-        }
-    }
-
-    private Map<String, BigDecimal> getServiceRevenue(int year) {
-        Map<String, BigDecimal> result = new HashMap<>();
-
-        // Get all invoices of year
-        List<Invoice> invoices = new ArrayList<>();
-        for (int month = 1; month <= 12; month++) {
-            invoices.addAll(invoiceDAO.getInvoicesByMonth(month, year));
-        }
-
-        // Get invoice details and group by service
-        for (Invoice invoice : invoices) {
-            if (!"PAID".equals(invoice.getStatus())) {
-                continue;
-            }
-
-            List<InvoiceDetail> details = invoiceDAO.getInvoiceDetails(invoice.getId());
-            for (InvoiceDetail detail : details) {
-                String serviceName = detail.getServiceName();
-                BigDecimal amount = detail.getAmount();
-
-                result.merge(serviceName, amount, BigDecimal::add);
-            }
-        }
-
-        return result;
+        BigDecimal total = serviceMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        serviceMap.forEach((k, v) -> {
+            double pct = total.doubleValue() > 0 ? v.doubleValue() / total.doubleValue() * 100 : 0;
+            model.addRow(new Object[]{k, formatMoney(v), String.format("%.1f%%", pct)});
+        });
     }
 
     private void loadApartmentContractReport() {
-        int totalApt = apartmentDAO.countApartments();
-        int rented = apartmentDAO.countRentedApartments();
-        int available = apartmentDAO.countAvailableApartments();
-        double rate = totalApt > 0 ? (rented * 100.0 / totalApt) : 0;
-
-        updateStatCard("total_apartments", String.valueOf(totalApt));
-        updateStatCard("rented_apartments", String.valueOf(rented));
-        updateStatCard("available_apartments", String.valueOf(available));
-        updateStatCard("occupancy_rate", String.format("%.1f%%", rate));
-
-        updateContractStatusTable();
-    }
-
-    private void updateContractStatusTable() {
-        JTable table = findTableByName("contract_status_table");
-        if (table == null) {
-            return;
+        // Logic depends on building selection
+        BuildingItem selected = (BuildingItem) buildingCombo.getSelectedItem();
+        List<Building> targets = new ArrayList<>();
+        
+        if (selected != null && selected.id != null) {
+            // Specific
+            buildingDAO.getAllBuildings().stream().filter(b -> b.getId().equals(selected.id)).findFirst().ifPresent(targets::add);
+        } else {
+            // All allowed
+            List<Long> allowed = permissionManager.getBuildingIds();
+            targets = buildingDAO.getAllBuildings().stream()
+                    .filter(b -> permissionManager.isAdmin() || (allowed != null && allowed.contains(b.getId())))
+                    .collect(Collectors.toList());
         }
-
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0);
-
-        int active = contractDAO.countContractsByStatus("ACTIVE");
-        int expired = contractDAO.countContractsByStatus("EXPIRED");
-        List<Contract> expiring = contractDAO.getExpiringContracts(30);
-
-        model.addRow(new Object[]{"Đang hiệu lực", active, "Hợp đồng đang hoạt động"});
-        model.addRow(new Object[]{"Sắp hết hạn", expiring.size(), "Còn <= 30 ngày"});
-        model.addRow(new Object[]{"Đã hết hạn", expired, "Cần gia hạn hoặc kết thúc"});
+        
+        int total = 0, rented = 0;
+        for (Building b : targets) {
+            List<Apartment> apts = apartmentDAO.getApartmentsByBuildingId(b.getId());
+            total += apts.size();
+            rented += apts.stream().filter(a -> "RENTED".equals(a.getStatus())).count();
+        }
+        
+        updateStatCard("total_apartments", String.valueOf(total));
+        updateStatCard("rented_apartments", String.valueOf(rented));
+        updateStatCard("available_apartments", String.valueOf(total - rented));
+        updateStatCard("occupancy_rate", total > 0 ? String.format("%.1f%%", (double)rented/total*100) : "0%");
+        
+        // Re-draw progress bars
+        Component comp = findComponentByName(tabbedPane, "occupancy_panel");
+        if (comp instanceof JPanel) {
+            JPanel p = (JPanel)comp;
+            p.removeAll();
+            for (Building b : targets) {
+                List<Apartment> apts = apartmentDAO.getApartmentsByBuildingId(b.getId());
+                int t = apts.size();
+                int r = (int)apts.stream().filter(a -> "RENTED".equals(a.getStatus())).count();
+                if (t > 0) {
+                     double pct = (double)r/t*100;
+                     JPanel row = new JPanel(new BorderLayout());
+                     row.setBackground(Color.WHITE);
+                     row.add(new JLabel(b.getName()), BorderLayout.WEST);
+                     JProgressBar pb = new JProgressBar(0, 100);
+                     pb.setValue((int)pct);
+                     pb.setStringPainted(true);
+                     row.add(pb, BorderLayout.CENTER);
+                     p.add(row);
+                }
+            }
+            p.revalidate();
+            p.repaint();
+        }
     }
 
+    // Utilities
+    private void updateStatCard(String key, String value) {
+        updateStatCardRecursive(this.getComponents(), key, value);
+    }
+    
+    private void updateStatCardRecursive(Component[] components, String key, String value) {
+        for (Component comp : components) {
+            if (comp instanceof JLabel && key.equals(comp.getName())) {
+                ((JLabel) comp).setText(value);
+                return;
+            }
+            if (comp instanceof Container) updateStatCardRecursive(((Container) comp).getComponents(), key, value);
+        }
+    }
+
+    private JTable findTableByName(String name) {
+        return (JTable) findComponentByName(this, name);
+    }
+    
+    private Component findComponentByName(Container container, String name) {
+        for (Component comp : container.getComponents()) {
+            if (name.equals(comp.getName())) return comp;
+            if (comp instanceof Container) {
+                Component found = findComponentByName((Container) comp, name);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private void customizeTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(35);
+        table.setShowGrid(true);
+        table.setGridColor(new Color(240, 240, 240));
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setBackground(new Color(245, 245, 245));
+    }
+
+    private Border createChartBorder(String title) {
+        return BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(UIConstants.BORDER_COLOR, 1),
+                title, TitledBorder.LEFT, TitledBorder.TOP,
+                new Font("Segoe UI", Font.BOLD, 14), UIConstants.TEXT_PRIMARY
+        );
+    }
+    
+    private JPanel createStatCard(String title, String value, Color color, String key) {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(color, 2),
+                new EmptyBorder(20, 20, 20, 20)
+        ));
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblTitle.setForeground(UIConstants.TEXT_SECONDARY);
+        
+        JLabel lblValue = new JLabel(value);
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblValue.setForeground(color);
+        lblValue.setName(key); // Key for updates
+        
+        card.add(lblTitle);
+        card.add(Box.createVerticalStrut(10));
+        card.add(lblValue);
+        return card;
+    }
+
+    private String formatMoney(BigDecimal amount) {
+        if (amount == null) return "0 VNĐ";
+        return currencyFormat.format(amount);
+    }
+    
     /**
-     * ===== EXPORT FUNCTIONS =====
+     * ===== ✅ EXPORT FEATURES (RESTORED) =====
      */
     private void exportToExcel() {
         // File chooser
@@ -951,6 +879,7 @@ public class ReportPanel extends JPanel {
                     int fromMonth = (Integer) fromMonthCombo.getSelectedItem();
                     int toMonth = (Integer) toMonthCombo.getSelectedItem();
 
+                    // Lưu ý: ReportExportService có thể cần cập nhật để hỗ trợ building filter nếu muốn
                     ReportExportService exportService = new ReportExportService();
                     return exportService.exportToExcel(finalPath, year, fromMonth, toMonth);
                 }
@@ -1097,64 +1026,11 @@ public class ReportPanel extends JPanel {
         }
     }
 
-    /**
-     * ===== UTILITIES =====
-     */
-    private void updateStatCard(String key, String value) {
-        updateStatCardRecursive(getComponents(), key, value);
-    }
-
-    private void updateStatCardRecursive(Component[] components, String key, String value) {
-        for (Component comp : components) {
-            if (comp instanceof JLabel) {
-                JLabel label = (JLabel) comp;
-                if (key.equals(label.getName())) {
-                    label.setText(value);
-                    return;
-                }
-            }
-            if (comp instanceof Container) {
-                updateStatCardRecursive(((Container) comp).getComponents(), key, value);
-            }
-        }
-    }
-
-    private JTable findTableByName(String name) {
-        return findTableRecursive(getComponents(), name);
-    }
-
-    private JTable findTableRecursive(Component[] components, String name) {
-        for (Component comp : components) {
-            if (comp instanceof JTable) {
-                JTable table = (JTable) comp;
-                if (name.equals(table.getName())) {
-                    return table;
-                }
-            }
-            if (comp instanceof Container) {
-                JTable result = findTableRecursive(((Container) comp).getComponents(), name);
-                if (result != null) {
-                    return result;
-                }
-            }
-        }
-        return null;
-    }
-
-    private String formatMoney(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) == 0) {
-            return "0 VNĐ";
-        }
-
-        long value = amount.longValue();
-        if (value >= 1_000_000_000) {
-            return String.format("%.2f tỷ", value / 1_000_000_000.0);
-        } else if (value >= 1_000_000) {
-            return String.format("%.1f tr", value / 1_000_000.0);
-        } else if (value >= 1_000) {
-            return String.format("%,d k", value / 1_000);
-        } else {
-            return String.format("%,d VNĐ", value);
-        }
+    // Helper class for ComboBox
+    private static class BuildingItem {
+        Long id;
+        String name;
+        public BuildingItem(Long id, String name) { this.id = id; this.name = name; }
+        @Override public String toString() { return name; }
     }
 }

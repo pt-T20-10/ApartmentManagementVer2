@@ -453,7 +453,7 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
     }
 
     private void showChangePasswordDialog() {
-        JOptionPane.showMessageDialog(this, "Chức năng đổi mật khẩu đang được cập nhật.");
+        new ChangePasswordDialog(this).setVisible(true);
     }
 
     // Icons classes (Giữ nguyên)

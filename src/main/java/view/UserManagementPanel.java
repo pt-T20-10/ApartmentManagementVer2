@@ -338,10 +338,14 @@ public class UserManagementPanel extends JPanel {
 
         int activeCount = 0;
         int adminCount = 0;
-        int staffCount = 0;
         int managerCount = 0;
 
         for (User user : users) {
+            // ✅ SỬA: Ẩn tài khoản STAFF khỏi danh sách của Admin
+            if ("STAFF".equalsIgnoreCase(user.getRole())) {
+                continue;
+            }
+
             String lastLogin = (user.getLastLogin() != null)
                     ? dateFormat.format(user.getLastLogin()) : "Chưa đăng nhập";
 
@@ -355,23 +359,16 @@ public class UserManagementPanel extends JPanel {
             };
             tableModel.addRow(row);
 
-            // Count statistics
-            if (user.isActive()) {
-                activeCount++;
-            }
-            if (user.isAdmin()) {
-                adminCount++;
-            } else if (user.isStaff()) {
-                staffCount++;
-            } else if (user.isManager()) {
-                managerCount++;
-            }
+            // Count statistics (chỉ đếm những người hiển thị)
+            if (user.isActive()) activeCount++;
+            if (user.isAdmin()) adminCount++;
+            else if (user.isManager()) managerCount++;
         }
 
-        // Update statistics - Đã bỏ phần đếm Accountant
+        // Update statistics (Bỏ đếm Staff)
         statsLabel.setText(String.format(
-                "📊 Tổng: %d tài khoản  |  ✓ Hoạt động: %d  |  👑 Admin: %d  |  🏢 Manager: %d  |  👤 Staff: %d",
-                users.size(), activeCount, adminCount, managerCount, staffCount
+                "📊 Tổng: %d tài khoản  |  ✓ Hoạt động: %d  |  👑 Admin: %d  |  🏢 Manager: %d",
+                tableModel.getRowCount(), activeCount, adminCount, managerCount
         ));
     }
 
@@ -390,6 +387,11 @@ public class UserManagementPanel extends JPanel {
         List<User> users = userDAO.getAllUsers();
 
         for (User user : users) {
+            // ✅ SỬA: Ẩn tài khoản STAFF khi tìm kiếm
+            if ("STAFF".equalsIgnoreCase(user.getRole())) {
+                continue;
+            }
+
             if (user.getUsername().toLowerCase().contains(searchText)
                     || user.getFullName().toLowerCase().contains(searchText)) {
 
