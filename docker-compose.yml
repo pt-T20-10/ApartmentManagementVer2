@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    container_name: apartment_db
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: apartment_management
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+
+  phpadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: apartment_pma
+    links:
+      - db
+    environment:
+        PMA_HOST: db
+        PMA_PORT: 3306
+    ports:
+      - "8081:80"
+
+volumes:
+    db_data:
