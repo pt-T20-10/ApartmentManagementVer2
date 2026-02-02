@@ -14,8 +14,8 @@ import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
 
 /**
- * Main Dashboard - Sky Blue Theme
- * Updated: Đã chuyển Building Selector sang DashboardPanel
+ * Main Dashboard - Sky Blue Theme Updated: Đã chuyển Building Selector sang
+ * DashboardPanel
  */
 public class MainDashboard extends JFrame implements DashboardNavigator {
 
@@ -50,7 +50,7 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         initializeFrame();
         createSidebar();
         createContentArea();
-        
+
         // Mặc định chọn Dashboard
         showDashboardPanel();
     }
@@ -97,14 +97,14 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         topPanel.add(titleLabel);
 
         // (Đã xóa Building Selector ở đây)
-
         sidebarPanel.add(topPanel, BorderLayout.NORTH);
 
         // --- CENTER: MENU ---
         JPanel menuPanel = new JPanel(new GridBagLayout());
         menuPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(4, 15, 4, 15);
         gbc.weightx = 1.0;
@@ -137,11 +137,19 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             gbc.gridy++;
         }
 
-        if (permissionManager.isAdmin()) addMenuButton(menuPanel, btnUsers, gbc);
-        if (permissionManager.isManager()) addMenuButton(menuPanel, btnMyStaff, gbc);
+        if (permissionManager.isAdmin()) {
+            addMenuButton(menuPanel, btnUsers, gbc);
+        }
+        if (permissionManager.isManager()) {
+            addMenuButton(menuPanel, btnMyStaff, gbc);
+        }
 
         gbc.weighty = 1.0;
-        menuPanel.add(new JPanel() {{ setOpaque(false); }}, gbc);
+        menuPanel.add(new JPanel() {
+            {
+                setOpaque(false);
+            }
+        }, gbc);
 
         JScrollPane scrollPane = new JScrollPane(menuPanel);
         scrollPane.setBorder(null);
@@ -173,12 +181,17 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         userPanel.setPreferredSize(new Dimension(280, 85));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridheight = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 0, 0, 12);
         userPanel.add(new JLabel(new UserIcon(42)), gbc);
 
-        gbc.gridx = 1; gbc.gridy = 0; gbc.gridheight = 1; gbc.weightx = 1.0;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;
+        gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(2, 0, 0, 0);
         JLabel lblName = new JLabel(name);
@@ -186,13 +199,17 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         lblName.setForeground(Color.WHITE);
         userPanel.add(lblName, gbc);
 
-        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 0, 0);
         JLabel lblRole = new JLabel(role);
         lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblRole.setForeground(new Color(224, 242, 254));
         userPanel.add(lblRole, gbc);
 
-        gbc.gridx = 2; gbc.gridy = 0; gbc.gridheight = 2; gbc.weightx = 0;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
+        gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.insets = new Insets(0, 5, 0, 0);
@@ -216,8 +233,12 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         btnServices.addActionListener(e -> showServicesPanel());
         btnInvoices.addActionListener(e -> showInvoicesPanel());
         btnReports.addActionListener(e -> showReportsPanel());
-        if (btnUsers != null) btnUsers.addActionListener(e -> showUsersPanel());
-        if (btnMyStaff != null) btnMyStaff.addActionListener(e -> showMyStaffPanel());
+        if (btnUsers != null) {
+            btnUsers.addActionListener(e -> showUsersPanel());
+        }
+        if (btnMyStaff != null) {
+            btnMyStaff.addActionListener(e -> showMyStaffPanel());
+        }
     }
 
     private SidebarButton createMenuButton(String text, String icon) {
@@ -225,6 +246,7 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
     }
 
     private class SidebarButton extends JButton {
+
         private boolean isSelected = false;
         private boolean isHovered = false;
         private String iconSymbol;
@@ -240,19 +262,32 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             setPreferredSize(new Dimension(240, 48));
 
             addMouseListener(new MouseAdapter() {
-                @Override public void mouseEntered(MouseEvent e) { isHovered = true; repaint(); }
-                @Override public void mouseExited(MouseEvent e) { isHovered = false; repaint(); }
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    isHovered = true;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    isHovered = false;
+                    repaint();
+                }
             });
         }
 
-        public void setSelected(boolean selected) { this.isSelected = selected; repaint(); }
+        public void setSelected(boolean selected) {
+            this.isSelected = selected;
+            repaint();
+        }
 
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            int w = getWidth(); int h = getHeight();
+            int w = getWidth();
+            int h = getHeight();
 
             if (isSelected) {
                 g2.setColor(BTN_ACTIVE_BG);
@@ -287,7 +322,11 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
 
     private void setActiveMenuButton(SidebarButton activeButton) {
         SidebarButton[] allButtons = {btnDashboard, btnBuildings, btnResidents, btnContracts, btnServices, btnInvoices, btnReports, btnUsers, btnMyStaff};
-        for (SidebarButton btn : allButtons) { if (btn != null) btn.setSelected(false); }
+        for (SidebarButton btn : allButtons) {
+            if (btn != null) {
+                btn.setSelected(false);
+            }
+        }
         if (activeButton != null) {
             activeButton.setSelected(true);
             currentActiveButton = activeButton;
@@ -316,7 +355,9 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
     public void showBuildingsPanel() {
         if (permissionManager.canAccess(PermissionManager.MODULE_BUILDINGS)) {
             showPanel(new BuildingManagementPanel(this::showFloorsOfBuilding), "Quản Lý Tòa Nhà", btnBuildings);
-        } else { permissionManager.showAccessDeniedMessage(this, "truy cập Tòa Nhà"); }
+        } else {
+            permissionManager.showAccessDeniedMessage(this, "truy cập Tòa Nhà");
+        }
     }
 
     public void showFloorsOfBuilding(Building building) {
@@ -324,7 +365,9 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             FloorManagementPanel floorPanel = new FloorManagementPanel(this::showApartmentsOfFloor);
             floorPanel.setBuilding(building);
             showPanel(floorPanel, "Quản Lý Tầng", btnBuildings);
-        } else { permissionManager.showAccessDeniedMessage(this, "truy cập Tầng"); }
+        } else {
+            permissionManager.showAccessDeniedMessage(this, "truy cập Tầng");
+        }
     }
 
     public void showApartmentsOfFloor(Floor floor) {
@@ -332,26 +375,48 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             ApartmentManagementPanel aptPanel = new ApartmentManagementPanel();
             aptPanel.setFloor(floor);
             showPanel(aptPanel, "Quản Lý Căn Hộ", btnBuildings);
-        } else { permissionManager.showAccessDeniedMessage(this, "truy cập Căn Hộ"); }
+        } else {
+            permissionManager.showAccessDeniedMessage(this, "truy cập Căn Hộ");
+        }
     }
 
     private void showResidentsPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_RESIDENTS)) showPanel(new ResidentManagementPanel(), "Quản Lý Cư Dân", btnResidents);
+        if (permissionManager.canAccess(PermissionManager.MODULE_RESIDENTS)) {
+            showPanel(new ResidentManagementPanel(), "Quản Lý Cư Dân", btnResidents);
+        }
     }
+
     private void showContractsPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_CONTRACTS)) showPanel(new ContractManagementPanel(), "Quản Lý Hợp Đồng", btnContracts);
+        if (permissionManager.canAccess(PermissionManager.MODULE_CONTRACTS)) {
+            showPanel(new ContractManagementPanel(), "Quản Lý Hợp Đồng", btnContracts);
+        }
     }
+
     private void showServicesPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_SERVICES)) showPanel(new ServiceManagementPanel(), "Quản Lý Dịch Vụ", btnServices);
+        if (permissionManager.canAccess(PermissionManager.MODULE_SERVICES)) {
+            showPanel(new ServiceManagementPanel(), "Quản Lý Dịch Vụ", btnServices);
+        }
     }
+
     private void showInvoicesPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_INVOICES)) showPanel(new InvoiceManagementPanel(), "Quản Lý Hóa Đơn", btnInvoices);
+        if (permissionManager.canAccess(PermissionManager.MODULE_INVOICES)) {
+            showPanel(new InvoiceManagementPanel(), "Quản Lý Hóa Đơn", btnInvoices);
+        }
     }
+
     private void showReportsPanel() {
-        if (permissionManager.canAccess(PermissionManager.MODULE_REPORTS)) showPanel(new ReportPanel(), "Báo Cáo", btnReports);
+        if (permissionManager.canAccess(PermissionManager.MODULE_REPORTS)) {
+            showPanel(new ReportPanel(), "Báo Cáo", btnReports);
+        }
     }
-    private void showUsersPanel() { showPanel(new UserManagementPanel(), "Quản Lý Tài Khoản", btnUsers); }
-    private void showMyStaffPanel() { showPanel(new MyStaffPanel(), "Nhân Viên Thuộc Tòa", btnMyStaff); }
+
+    private void showUsersPanel() {
+        showPanel(new UserManagementPanel(), "Quản Lý Tài Khoản", btnUsers);
+    }
+
+    private void showMyStaffPanel() {
+        showPanel(new MyStaffPanel(), "Nhân Viên Thuộc Tòa", btnMyStaff);
+    }
 
     private void applyRoleBasedAccess() {
         btnBuildings.setVisible(permissionManager.canAccess(PermissionManager.MODULE_BUILDINGS));
@@ -373,7 +438,9 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
         logout.setBackground(Color.WHITE);
         logout.setForeground(new Color(225, 29, 72));
         logout.addActionListener(e -> performLogout());
-        popup.add(changePass); popup.addSeparator(); popup.add(logout);
+        popup.add(changePass);
+        popup.addSeparator();
+        popup.add(logout);
         popup.show(invoker, -100, -70);
     }
 
@@ -384,14 +451,30 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             dispose();
         }
     }
-    private void showChangePasswordDialog() { JOptionPane.showMessageDialog(this, "Chức năng đổi mật khẩu đang được cập nhật."); }
+
+    private void showChangePasswordDialog() {
+        JOptionPane.showMessageDialog(this, "Chức năng đổi mật khẩu đang được cập nhật.");
+    }
 
     // Icons classes (Giữ nguyên)
     private static class HeaderIcon implements Icon {
-        int size; Color color;
-        public HeaderIcon(int size, Color color) { this.size = size; this.color = color; }
-        public int getIconWidth() { return size; }
-        public int getIconHeight() { return size; }
+
+        int size;
+        Color color;
+
+        public HeaderIcon(int size, Color color) {
+            this.size = size;
+            this.color = color;
+        }
+
+        public int getIconWidth() {
+            return size;
+        }
+
+        public int getIconHeight() {
+            return size;
+        }
+
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -400,40 +483,108 @@ public class MainDashboard extends JFrame implements DashboardNavigator {
             g2.setColor(new Color(2, 132, 199));
             int p = size / 4;
             g2.fillRect(x + p, y + p, size / 2, size / 2);
-            g2.setColor(color); g2.setStroke(new BasicStroke(2f));
+            g2.setColor(color);
+            g2.setStroke(new BasicStroke(2f));
             g2.drawLine(x + size / 2, y + p, x + size / 2, y + size - p);
             g2.drawLine(x + p, y + size / 2, x + size - p, y + size / 2);
             g2.dispose();
         }
     }
+
     private static class UserIcon implements Icon {
-        int size; public UserIcon(int size) { this.size = size; }
-        public int getIconWidth() { return size; } public int getIconHeight() { return size; }
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(255, 255, 255, 50)); g2.fillOval(x, y, size, size);
-            g2.setColor(Color.WHITE); g2.setClip(new Ellipse2D.Float(x, y, size, size));
-            g2.fillOval(x + size / 4, y + size / 5, size / 2, size / 2);
-            g2.fillOval(x + size / 6, y + size / 2 + size / 6, size * 2 / 3, size / 2); g2.dispose();
+
+        int size;
+
+        public UserIcon(int size) {
+            this.size = size;
         }
-    }
-    private static class SettingsIcon implements Icon {
-        int size; Color color; public SettingsIcon(int size, Color color) { this.size = size; this.color = color; }
-        public int getIconWidth() { return size; } public int getIconHeight() { return size; }
+
+        public int getIconWidth() {
+            return size;
+        }
+
+        public int getIconHeight() {
+            return size;
+        }
+
         public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color); int dotSize = 4; int centerX = x + size / 2 - dotSize / 2; int startY = y + 4; int gap = 6;
-            g2.fillOval(centerX, startY, dotSize, dotSize); g2.fillOval(centerX, startY + gap, dotSize, dotSize); g2.fillOval(centerX, startY + gap * 2, dotSize, dotSize); g2.dispose();
+            g2.setColor(new Color(255, 255, 255, 50));
+            g2.fillOval(x, y, size, size);
+            g2.setColor(Color.WHITE);
+            g2.setClip(new Ellipse2D.Float(x, y, size, size));
+            g2.fillOval(x + size / 4, y + size / 5, size / 2, size / 2);
+            g2.fillOval(x + size / 6, y + size / 2 + size / 6, size * 2 / 3, size / 2);
+            g2.dispose();
         }
     }
 
-    @Override public void goToBuildings() { showBuildingsPanel(); }
-    @Override public void goToApartments() { showBuildingsPanel(); }
-    @Override public void goToResidents() { showResidentsPanel(); }
-    @Override public void goToContracts() { showContractsPanel(); }
-    @Override public void goToInvoices() { showInvoicesPanel(); }
-    @Override public void goToReports() { showReportsPanel(); }
-    @Override public void goToServices() { showServicesPanel(); }
+    private static class SettingsIcon implements Icon {
+
+        int size;
+        Color color;
+
+        public SettingsIcon(int size, Color color) {
+            this.size = size;
+            this.color = color;
+        }
+
+        public int getIconWidth() {
+            return size;
+        }
+
+        public int getIconHeight() {
+            return size;
+        }
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            int dotSize = 4;
+            int centerX = x + size / 2 - dotSize / 2;
+            int startY = y + 4;
+            int gap = 6;
+            g2.fillOval(centerX, startY, dotSize, dotSize);
+            g2.fillOval(centerX, startY + gap, dotSize, dotSize);
+            g2.fillOval(centerX, startY + gap * 2, dotSize, dotSize);
+            g2.dispose();
+        }
+    }
+
+    @Override
+    public void goToBuildings() {
+        showBuildingsPanel();
+    }
+
+    @Override
+    public void goToApartments() {
+        showBuildingsPanel();
+    }
+
+    @Override
+    public void goToResidents() {
+        showResidentsPanel();
+    }
+
+    @Override
+    public void goToContracts() {
+        showContractsPanel();
+    }
+
+    @Override
+    public void goToInvoices() {
+        showInvoicesPanel();
+    }
+
+    @Override
+    public void goToReports() {
+        showReportsPanel();
+    }
+
+    @Override
+    public void goToServices() {
+        showServicesPanel();
+    }
 }

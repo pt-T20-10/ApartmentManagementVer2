@@ -128,6 +128,9 @@ public class PermissionManager {
                 case MODULE_CONTRACTS:
                 case MODULE_MY_STAFF:
                 case MODULE_REPORTS:
+                // ✅ THÊM 2 DÒNG DƯỚI ĐÂY:
+                case MODULE_SERVICES:
+                case MODULE_INVOICES:
                     return true;
                 default:
                     return false;

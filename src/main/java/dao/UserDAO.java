@@ -61,23 +61,16 @@ public class UserDAO {
     // ==================== CRUD ====================
 
     public User getUserById(Long id) {
-        String sql = "SELECT u.*, a.full_name AS assigned_by_name "
-                + "FROM users u "
-                + "LEFT JOIN users a ON u.assigned_by = a.id "
-                + "WHERE u.id = ? AND u.is_deleted = 0";
-
-        try (Connection conn = Db_connection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        String sql = "SELECT u.*, a.full_name AS assigned_by_name FROM users u LEFT JOIN users a ON u.assigned_by = a.id WHERE u.id = ? AND u.is_deleted = 0";
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, id);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 User user = mapResultSetToUser(rs);
-                loadUserBuildings(user); // ✅ NEW
+                loadUserBuildings(user);
                 return user;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
 
@@ -109,37 +102,22 @@ public class UserDAO {
 
     public List<User> getAllUsers(User currentUser) {
         List<User> users = new ArrayList<>();
-
-        String sql = "SELECT u.*, a.full_name AS assigned_by_name "
-                + "FROM users u "
-                + "LEFT JOIN users a ON u.assigned_by = a.id "
-                + "WHERE u.is_deleted = 0 ";
-
-        // ✅ NEW: MANAGER chỉ thấy users trong buildings của mình
+        // Nếu là Manager thì chỉ hiện nhân viên thuộc tòa nhà mình quản lý
+        String sql = "SELECT u.*, a.full_name AS assigned_by_name FROM users u LEFT JOIN users a ON u.assigned_by = a.id WHERE u.is_deleted = 0 ";
+        
         if (currentUser != null && currentUser.isManager() && currentUser.hasBuilding()) {
-            sql += "AND (u.id IN (SELECT user_id FROM user_buildings WHERE building_id IN (" +
-                   buildingIdsToString(currentUser.getBuildingIds()) + ")) OR u.id = ?) ";
+            sql += "AND u.id IN (SELECT user_id FROM user_buildings WHERE building_id IN (" + buildingIdsToString(currentUser.getBuildingIds()) + ")) ";
         }
-
         sql += "ORDER BY u.created_at DESC";
 
-        try (Connection conn = Db_connection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            if (currentUser != null && currentUser.isManager() && currentUser.hasBuilding()) {
-                ps.setLong(1, currentUser.getId());
-            }
-
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 User user = mapResultSetToUser(rs);
-                loadUserBuildings(user); // ✅ NEW
+                loadUserBuildings(user);
                 users.add(user);
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return users;
     }
 
@@ -254,7 +232,7 @@ public class UserDAO {
             conn = Db_connection.getConnection();
             conn.setAutoCommit(false);
 
-            // 1. Update user
+            // 1. Update bảng users
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, user.getUsername());
             pstmt.setString(2, user.getFullName());
@@ -267,15 +245,15 @@ public class UserDAO {
                 return false;
             }
 
-            // 2. ✅ NEW: Update user_buildings
+            // 2. ✅ QUAN TRỌNG: Cập nhật bảng user_buildings
+            // Nếu danh sách buildingIds không null -> Có thay đổi phân công
             if (user.getBuildingIds() != null) {
-                // Delete old mappings
-                PreparedStatement delStmt = conn.prepareStatement(
-                    "DELETE FROM user_buildings WHERE user_id = ?");
+                // Xóa phân công cũ
+                PreparedStatement delStmt = conn.prepareStatement("DELETE FROM user_buildings WHERE user_id = ?");
                 delStmt.setLong(1, user.getId());
                 delStmt.executeUpdate();
 
-                // Insert new mappings
+                // Thêm phân công mới
                 if (!user.getBuildingIds().isEmpty()) {
                     User currentUser = SessionManager.getInstance().getCurrentUser();
                     Long assignedBy = currentUser != null ? currentUser.getId() : null;
@@ -292,66 +270,47 @@ public class UserDAO {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             return false;
         } finally {
-            try {
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (SQLException e) { e.printStackTrace(); }
         }
     }
 
     public boolean deleteUser(Long userId) {
         String sql = "UPDATE users SET is_deleted = 1, is_active = 0 WHERE id = ?";
-        try (Connection conn = Db_connection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, userId);
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return false;
     }
 
     // ==================== BUILDING ASSIGNMENT (NEW) ====================
 
-    /**
-     * Gán user vào nhiều buildings (batch insert)
-     */
     private boolean assignUserToBuildings(Connection conn, Long userId, List<Long> buildingIds, Long assignedBy) 
             throws SQLException {
-        String sql = "INSERT INTO user_buildings (user_id, building_id, assigned_by, assigned_date) " +
-                     "VALUES (?, ?, ?, NOW())";
+        String sql = "INSERT INTO user_buildings (user_id, building_id, assigned_by, assigned_date) VALUES (?, ?, ?, NOW())";
         
-        PreparedStatement pstmt = conn.prepareStatement(sql);
-        
-        for (Long buildingId : buildingIds) {
-            pstmt.setLong(1, userId);
-            pstmt.setLong(2, buildingId);
-            if (assignedBy != null) {
-                pstmt.setLong(3, assignedBy);
-            } else {
-                pstmt.setNull(3, Types.BIGINT);
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            for (Long buildingId : buildingIds) {
+                pstmt.setLong(1, userId);
+                pstmt.setLong(2, buildingId);
+                if (assignedBy != null) {
+                    pstmt.setLong(3, assignedBy);
+                } else {
+                    pstmt.setNull(3, Types.BIGINT);
+                }
+                pstmt.addBatch();
             }
-            pstmt.addBatch();
+            
+            int[] results = pstmt.executeBatch();
+            for (int result : results) {
+                if (result == Statement.EXECUTE_FAILED) return false;
+            }
+            return true;
         }
-        
-        int[] results = pstmt.executeBatch();
-        for (int result : results) {
-            if (result == 0) return false;
-        }
-        return true;
     }
-
     /**
      * Update buildings cho user (public method cho UI gọi)
      */
@@ -397,41 +356,32 @@ public class UserDAO {
         }
     }
 
-    /**
-     * Load building IDs + names từ user_buildings vào User object
-     */
-    /**
-     * Load building IDs + names từ user_buildings VÀ buildings (manager_user_id)
-     * FIX: Hỗ trợ cả dữ liệu cũ (chưa migrate sang user_buildings)
-     */
+    
     private void loadUserBuildings(User user) {
         if (user == null || user.getId() == null) return;
-        if (user.isAdmin()) return; // ADMIN không có buildings
+        if (user.isAdmin()) return;
 
         List<Long> buildingIds = new ArrayList<>();
         List<String> buildingNames = new ArrayList<>();
 
-        // ✅ SQL FIX: Lấy building nếu user nằm trong bảng user_buildings HOẶC là manager_user_id của bảng buildings
+        // Lấy từ bảng user_buildings VÀ cả bảng buildings (nếu là manager cũ)
         String sql = "SELECT DISTINCT b.id, b.name " +
                      "FROM buildings b " +
                      "LEFT JOIN user_buildings ub ON b.id = ub.building_id " +
                      "WHERE (ub.user_id = ? OR b.manager_user_id = ?) " +
-                     "AND b.is_deleted = 0 " +
-                     "ORDER BY b.name";
+                     "AND b.is_deleted = 0 ORDER BY b.name";
 
         try (Connection conn = Db_connection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setLong(1, user.getId());
-            ps.setLong(2, user.getId()); // Tham số thứ 2 cho điều kiện manager_user_id
+            ps.setLong(2, user.getId());
 
             ResultSet rs = ps.executeQuery();
-
             while (rs.next()) {
                 buildingIds.add(rs.getLong("id"));
                 buildingNames.add(rs.getString("name"));
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -443,39 +393,27 @@ public class UserDAO {
     // ==================== HELPERS ====================
 
     private void updateLastLogin(Long userId) {
-        String sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
-        try (Connection conn = Db_connection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement pstmt = conn.prepareStatement("UPDATE users SET last_login = NOW() WHERE id = ?")) {
             pstmt.setLong(1, userId);
             pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    private void updatePasswordHash(Long userId, String hashedPassword) {
-        String sql = "UPDATE users SET password = ? WHERE id = ?";
-        try (Connection conn = Db_connection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, hashedPassword);
+    private void updatePasswordHash(Long userId, String hash) {
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement pstmt = conn.prepareStatement("UPDATE users SET password = ? WHERE id = ?")) {
+            pstmt.setString(1, hash);
             pstmt.setLong(2, userId);
             pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public boolean changePassword(Long userId, String newPassword) {
         String sql = "UPDATE users SET password = ? WHERE id = ?";
-        try (Connection conn = Db_connection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            String hashedPassword = PasswordUtil.hashPassword(newPassword);
-            pstmt.setString(1, hashedPassword);
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, PasswordUtil.hashPassword(newPassword));
             pstmt.setLong(2, userId);
             return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
         return false;
     }
 
@@ -572,23 +510,12 @@ public class UserDAO {
         user.setActive(rs.getBoolean("is_active"));
         user.setCreatedAt(rs.getTimestamp("created_at"));
         user.setLastLogin(rs.getTimestamp("last_login"));
-
-        Long assignedBy = rs.getLong("assigned_by");
-        user.setAssignedBy(rs.wasNull() ? null : assignedBy);
-
-        try {
-            user.setAssignedByName(rs.getString("assigned_by_name"));
-        } catch (SQLException e) {
-            user.setAssignedByName(null);
-        }
-
-        // assigned_date giờ lấy từ user_buildings, không lấy từ users nữa
-        // Để null ở đây, sẽ được set trong loadUserBuildings nếu cần
-
+        user.setAssignedBy(rs.getLong("assigned_by"));
+        if (rs.wasNull()) user.setAssignedBy(null);
+        try { user.setAssignedByName(rs.getString("assigned_by_name")); } catch (SQLException e) { user.setAssignedByName(null); }
         return user;
     }
 
-    // Helper: Convert List<Long> to "1,2,3" cho IN clause
     private String buildingIdsToString(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return "0";
         StringBuilder sb = new StringBuilder();

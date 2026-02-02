@@ -186,7 +186,8 @@ public class MyStaffPanel extends JPanel {
     // ================= ACTIONS =================
     private void addStaff() {
         JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-        MyStaffDialog dialog = new MyStaffDialog(parent, currentManager.getBuildingId());
+        // ✅ SỬA: Truyền 'currentManager' thay vì buildingId đơn lẻ
+        MyStaffDialog dialog = new MyStaffDialog(parent, currentManager);
         dialog.setVisible(true);
 
         if (dialog.isConfirmed()) {
@@ -369,7 +370,8 @@ public class MyStaffPanel extends JPanel {
 
         private void edit() {
             JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(MyStaffPanel.this);
-            MyStaffDialog dialog = new MyStaffDialog(parent, user, currentManager.getBuildingId());
+            // ✅ SỬA: Truyền 'currentManager' vào constructor
+            MyStaffDialog dialog = new MyStaffDialog(parent, user, currentManager);
             dialog.setVisible(true);
             if (dialog.isConfirmed()) {
                 loadStaff();

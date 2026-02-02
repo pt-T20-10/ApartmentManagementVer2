@@ -82,30 +82,46 @@ public class ContractDAO {
     /**
      * Get all contracts with building filter
      */
+    /**
+     * ✅ FIXED: Lấy danh sách hợp đồng (Hỗ trợ Manager nhiều tòa nhà)
+     */
     public List<Contract> getAllContracts() {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         List<Contract> contracts = new ArrayList<>();
 
-        String sql = "SELECT c.* FROM contracts c "
+        StringBuilder sql = new StringBuilder("SELECT c.* FROM contracts c "
                 + "JOIN apartments a ON c.apartment_id = a.id "
                 + "JOIN floors f ON a.floor_id = f.id "
-                + "WHERE c.is_deleted = 0 ";
+                + "WHERE c.is_deleted = 0 ");
 
-        // Building filter for non-ADMIN
+        // Nếu không phải Admin, lọc theo danh sách tòa nhà được gán
         if (currentUser != null && !currentUser.isAdmin()) {
-            sql += "AND f.building_id = ? ";
+            List<Long> buildingIds = currentUser.getBuildingIds();
+            if (buildingIds != null && !buildingIds.isEmpty()) {
+                sql.append("AND f.building_id IN (");
+                for (int i = 0; i < buildingIds.size(); i++) {
+                    sql.append(i == 0 ? "?" : ",?");
+                }
+                sql.append(") ");
+            } else {
+                // User không quản lý tòa nào -> trả về rỗng
+                return contracts;
+            }
         }
 
-        sql += "ORDER BY c.created_at DESC";
+        sql.append("ORDER BY c.created_at DESC");
 
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
+            // Set tham số cho IN clause
             if (currentUser != null && !currentUser.isAdmin()) {
-                ps.setLong(1, currentUser.getBuildingId());
+                List<Long> buildingIds = currentUser.getBuildingIds();
+                for (int i = 0; i < buildingIds.size(); i++) {
+                    ps.setLong(i + 1, buildingIds.get(i));
+                }
             }
 
             ResultSet rs = ps.executeQuery();
-
             while (rs.next()) {
                 contracts.add(mapResultSetToContract(rs));
             }
@@ -556,24 +572,39 @@ public class ContractDAO {
     /**
      * Count contracts by status with building filter
      */
+    /**
+     * ✅ FIXED: Đếm hợp đồng theo trạng thái (Hỗ trợ Manager nhiều tòa nhà)
+     */
     public int countContractsByStatus(String status) {
         User currentUser = SessionManager.getInstance().getCurrentUser();
 
-        String sql = "SELECT COUNT(*) FROM contracts c "
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM contracts c "
                 + "JOIN apartments a ON c.apartment_id = a.id "
                 + "JOIN floors f ON a.floor_id = f.id "
-                + "WHERE c.status = ? AND c.is_deleted = 0 ";
+                + "WHERE c.status = ? AND c.is_deleted = 0 ");
 
-        if (currentUser != null && !currentUser.isAdmin() && currentUser.getBuildingId() != null) {
-            sql += "AND f.building_id = ?";
+        if (currentUser != null && !currentUser.isAdmin()) {
+            List<Long> buildingIds = currentUser.getBuildingIds();
+            if (buildingIds != null && !buildingIds.isEmpty()) {
+                sql.append("AND f.building_id IN (");
+                for (int i = 0; i < buildingIds.size(); i++) {
+                    sql.append(i == 0 ? "?" : ",?");
+                }
+                sql.append(") ");
+            } else {
+                return 0;
+            }
         }
 
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             ps.setString(1, status);
 
-            if (currentUser != null && !currentUser.isAdmin() && currentUser.getBuildingId() != null) {
-                ps.setLong(2, currentUser.getBuildingId());
+            if (currentUser != null && !currentUser.isAdmin()) {
+                List<Long> buildingIds = currentUser.getBuildingIds();
+                for (int i = 0; i < buildingIds.size(); i++) {
+                    ps.setLong(i + 2, buildingIds.get(i)); // i + 2 vì tham số 1 là status
+                }
             }
 
             ResultSet rs = ps.executeQuery();
@@ -593,31 +624,46 @@ public class ContractDAO {
     /**
      * Get expiring contracts with building filter
      */
+    /**
+     * ✅ FIXED: Lấy hợp đồng sắp hết hạn (Hỗ trợ Manager nhiều tòa nhà)
+     */
     public List<Contract> getExpiringContracts(int daysThreshold) {
         User currentUser = SessionManager.getInstance().getCurrentUser();
         List<Contract> contracts = new ArrayList<>();
 
-        String sql = "SELECT c.* FROM contracts c "
+        StringBuilder sql = new StringBuilder("SELECT c.* FROM contracts c "
                 + "JOIN apartments a ON c.apartment_id = a.id "
                 + "JOIN floors f ON a.floor_id = f.id "
                 + "WHERE c.contract_type = 'RENTAL' "
                 + "AND c.end_date IS NOT NULL "
                 + "AND DATEDIFF(c.end_date, CURDATE()) BETWEEN 0 AND ? "
                 + "AND c.status = 'ACTIVE' "
-                + "AND c.is_deleted = 0 ";
+                + "AND c.is_deleted = 0 ");
 
         if (currentUser != null && !currentUser.isAdmin()) {
-            sql += "AND f.building_id = ? ";
+            List<Long> buildingIds = currentUser.getBuildingIds();
+            if (buildingIds != null && !buildingIds.isEmpty()) {
+                sql.append("AND f.building_id IN (");
+                for (int i = 0; i < buildingIds.size(); i++) {
+                    sql.append(i == 0 ? "?" : ",?");
+                }
+                sql.append(") ");
+            } else {
+                return contracts;
+            }
         }
 
-        sql += "ORDER BY c.end_date ASC";
+        sql.append("ORDER BY c.end_date ASC");
 
-        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = Db_connection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             ps.setInt(1, daysThreshold);
 
             if (currentUser != null && !currentUser.isAdmin()) {
-                ps.setLong(2, currentUser.getBuildingId());
+                List<Long> buildingIds = currentUser.getBuildingIds();
+                for (int i = 0; i < buildingIds.size(); i++) {
+                    ps.setLong(i + 2, buildingIds.get(i));
+                }
             }
 
             try (ResultSet rs = ps.executeQuery()) {

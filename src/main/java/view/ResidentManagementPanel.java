@@ -705,25 +705,32 @@ public class ResidentManagementPanel extends JPanel
             buildingFilterCombo.removeAllItems();
 
             List<Building> buildings = buildingDAO.getAllBuildings();
-            Long filterId = permissionManager.getBuildingFilter();
+            List<Long> buildingIds = permissionManager.getBuildingIds();
 
-            if (filterId == null) {
+            // ✅ FIX: Nếu Admin (buildingIds = null) → Hiển thị tất cả
+            if (buildingIds == null) {
                 for (Building building : buildings) {
                     buildingFilterCombo.addItem(new BuildingDisplay(building));
                 }
-            } else {
+                buildingFilterCombo.setEnabled(true);
+            } 
+            // ✅ FIX: Nếu Manager/Staff → Hiển thị các tòa được phân quyền
+            else {
                 for (Building building : buildings) {
-                    if (building.getId().equals(filterId)) {
+                    if (buildingIds.contains(building.getId())) {
                         buildingFilterCombo.addItem(new BuildingDisplay(building));
                     }
                 }
+                
+                // ✅ QUAN TRỌNG: Luôn enable dropdown để cho phép chọn giữa các tòa
+                buildingFilterCombo.setEnabled(true);
+                
                 if (buildingFilterCombo.getItemCount() > 0) {
                     buildingFilterCombo.setSelectedIndex(0);
-                    buildingFilterCombo.setEnabled(false);
                 }
             }
 
-            if (buildingFilterCombo.getItemCount() == 0 && filterId == null) {
+            if (buildingFilterCombo.getItemCount() == 0) {
                 tableModel.setRowCount(0);
                 countLabel.setText("Không có tòa nhà nào");
                 contextLabel.setText("");

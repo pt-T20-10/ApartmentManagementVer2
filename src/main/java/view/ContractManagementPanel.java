@@ -781,24 +781,32 @@ public class ContractManagementPanel extends JPanel {
         try {
             buildings = buildingDAO.getAllBuildings();
             buildingFilterCombo.removeAllItems();
-            Long filterId = permissionManager.getBuildingFilter();
+            List<Long> buildingIds = permissionManager.getBuildingIds();
 
-            if (filterId == null) {
+            // ✅ FIX: Nếu Admin (buildingIds = null) → Hiển thị "Tất cả" + các tòa
+            if (buildingIds == null) {
                 buildingFilterCombo.addItem(new BuildingDisplay(new Building(null, "Tất cả", null, null, null, null, false)));
                 for (Building building : buildings) {
                     buildingFilterCombo.addItem(new BuildingDisplay(building));
                 }
-            } else {
+                buildingFilterCombo.setEnabled(true);
+            } 
+            // ✅ FIX: Nếu Manager/Staff → Hiển thị các tòa được phân quyền
+            else {
                 for (Building building : buildings) {
-                    if (building.getId().equals(filterId)) {
+                    if (buildingIds.contains(building.getId())) {
                         buildingFilterCombo.addItem(new BuildingDisplay(building));
                     }
                 }
+                
+                // ✅ QUAN TRỌNG: Luôn enable dropdown để cho phép chọn giữa các tòa
+                buildingFilterCombo.setEnabled(true);
+                
                 if (buildingFilterCombo.getItemCount() > 0) {
                     buildingFilterCombo.setSelectedIndex(0);
-                    buildingFilterCombo.setEnabled(false);
                 }
             }
+            
             allContracts = contractDAO.getAllContracts();
         } finally {
             isUpdatingCombos = false;

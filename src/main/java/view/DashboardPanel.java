@@ -28,7 +28,7 @@ public class DashboardPanel extends JPanel {
 
     private final DashboardNavigator navigator;
     private final User currentUser;
-    
+
     // ✅ NEW: Mutable ID (Có thể thay đổi)
     private Long selectedBuildingId = null;
 
@@ -37,7 +37,7 @@ public class DashboardPanel extends JPanel {
     private ResidentDAO residentDAO;
     private ContractDAO contractDAO;
     private InvoiceDAO invoiceDAO;
-    
+
     // ✅ NEW: Container để reload dữ liệu
     private JPanel bodyPanel;
 
@@ -45,7 +45,7 @@ public class DashboardPanel extends JPanel {
         this.navigator = navigator;
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         // Mặc định null = Tất cả (Nếu Admin) hoặc Tổng hợp (Nếu Manager)
-        
+
         setLayout(new BorderLayout());
         setBackground(new Color(245, 247, 250));
 
@@ -73,7 +73,7 @@ public class DashboardPanel extends JPanel {
         bodyPanel = new JPanel();
         bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
         bodyPanel.setBackground(new Color(245, 247, 250));
-        
+
         // Load data lần đầu
         refreshBodyData();
 
@@ -98,7 +98,7 @@ public class DashboardPanel extends JPanel {
 
         // Nếu User có nhiều toà nhà (hoặc Admin), hiển thị Selector
         List<Building> buildings = buildingDAO.getAllBuildings(); // DAO tự lọc theo quyền
-        
+
         if (!buildings.isEmpty()) {
             header.add(Box.createHorizontalStrut(20)); // Khoảng cách
 
@@ -106,10 +106,10 @@ public class DashboardPanel extends JPanel {
             selector.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             selector.setFocusable(false);
             selector.setBackground(Color.WHITE);
-            
+
             // Item mặc định: "Tất cả"
             selector.addItem(new BuildingItem(null, "--- Tất cả tòa nhà ---"));
-            
+
             for (Building b : buildings) {
                 selector.addItem(new BuildingItem(b.getId(), b.getName()));
             }
@@ -130,68 +130,108 @@ public class DashboardPanel extends JPanel {
     // ✅ NEW: Hàm làm mới dữ liệu
     private void refreshBodyData() {
         bodyPanel.removeAll();
-        
+
         bodyPanel.add(createKPISection());
         bodyPanel.add(Box.createVerticalStrut(20));
         bodyPanel.add(createChartsSection());
-        
+
         bodyPanel.revalidate();
         bodyPanel.repaint();
     }
 
     // Helper Class cho ComboBox
     private static class BuildingItem {
+
         Long id;
         String name;
-        public BuildingItem(Long id, String name) { this.id = id; this.name = name; }
-        @Override public String toString() { return name; }
+
+        public BuildingItem(Long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     // ================= LOGIC TÍNH TOÁN (Giữ nguyên như cũ) =================
-    
     private int getBuildingCount() {
-        if (selectedBuildingId != null) return 1;
-        if (currentUser.isAdmin()) return buildingDAO.countBuildings();
+        if (selectedBuildingId != null) {
+            return 1;
+        }
+        if (currentUser.isAdmin()) {
+            return buildingDAO.countBuildings();
+        }
         return currentUser.getBuildingIds().size();
     }
 
     private int getApartmentCount() {
-        if (selectedBuildingId != null) return apartmentDAO.countApartmentsByBuilding(selectedBuildingId);
+        if (selectedBuildingId != null) {
+            return apartmentDAO.countApartmentsByBuilding(selectedBuildingId);
+        }
         int sum = 0;
-        if (currentUser.isAdmin()) return apartmentDAO.countApartments();
-        for (Long id : currentUser.getBuildingIds()) sum += apartmentDAO.countApartmentsByBuilding(id);
+        if (currentUser.isAdmin()) {
+            return apartmentDAO.countApartments();
+        }
+        for (Long id : currentUser.getBuildingIds()) {
+            sum += apartmentDAO.countApartmentsByBuilding(id);
+        }
         return sum;
     }
 
     private int getAvailableApartmentCount() {
-        if (selectedBuildingId != null) return apartmentDAO.countAvailableApartmentsByBuilding(selectedBuildingId);
+        if (selectedBuildingId != null) {
+            return apartmentDAO.countAvailableApartmentsByBuilding(selectedBuildingId);
+        }
         int sum = 0;
-        if (currentUser.isAdmin()) return apartmentDAO.countAvailableApartments();
-        for (Long id : currentUser.getBuildingIds()) sum += apartmentDAO.countAvailableApartmentsByBuilding(id);
+        if (currentUser.isAdmin()) {
+            return apartmentDAO.countAvailableApartments();
+        }
+        for (Long id : currentUser.getBuildingIds()) {
+            sum += apartmentDAO.countAvailableApartmentsByBuilding(id);
+        }
         return sum;
     }
 
     private int getRentedApartmentCount() {
-        if (selectedBuildingId != null) return apartmentDAO.countRentedApartmentsByBuilding(selectedBuildingId);
+        if (selectedBuildingId != null) {
+            return apartmentDAO.countRentedApartmentsByBuilding(selectedBuildingId);
+        }
         int sum = 0;
-        if (currentUser.isAdmin()) return apartmentDAO.countRentedApartments();
-        for (Long id : currentUser.getBuildingIds()) sum += apartmentDAO.countRentedApartmentsByBuilding(id);
+        if (currentUser.isAdmin()) {
+            return apartmentDAO.countRentedApartments();
+        }
+        for (Long id : currentUser.getBuildingIds()) {
+            sum += apartmentDAO.countRentedApartmentsByBuilding(id);
+        }
         return sum;
     }
 
     private int getResidentCount() {
-        if (selectedBuildingId != null) return residentDAO.countResidentsByBuilding(selectedBuildingId);
-        if (currentUser.isAdmin()) return residentDAO.countResidents();
-        
+        if (selectedBuildingId != null) {
+            return residentDAO.countResidentsByBuilding(selectedBuildingId);
+        }
+        if (currentUser.isAdmin()) {
+            return residentDAO.countResidents();
+        }
+
         int sum = 0;
-        for (Long id : currentUser.getBuildingIds()) sum += residentDAO.countResidentsByBuilding(id);
+        for (Long id : currentUser.getBuildingIds()) {
+            sum += residentDAO.countResidentsByBuilding(id);
+        }
         return sum;
     }
 
     private BigDecimal getTotalRevenue() {
-        if (selectedBuildingId != null) return invoiceDAO.getTotalRevenueByBuilding(selectedBuildingId);
-        if (currentUser.isAdmin()) return invoiceDAO.getTotalRevenue();
-        
+        if (selectedBuildingId != null) {
+            return invoiceDAO.getTotalRevenueByBuilding(selectedBuildingId);
+        }
+        if (currentUser.isAdmin()) {
+            return invoiceDAO.getTotalRevenue();
+        }
+
         BigDecimal sum = BigDecimal.ZERO;
         for (Long id : currentUser.getBuildingIds()) {
             sum = sum.add(invoiceDAO.getTotalRevenueByBuilding(id));
@@ -200,21 +240,29 @@ public class DashboardPanel extends JPanel {
     }
 
     private int getUnpaidInvoicesCount() {
-        if (selectedBuildingId != null) return invoiceDAO.countUnpaidInvoicesByBuilding(selectedBuildingId);
-        if (currentUser.isAdmin()) return invoiceDAO.countUnpaidInvoices();
-        
+        if (selectedBuildingId != null) {
+            return invoiceDAO.countUnpaidInvoicesByBuilding(selectedBuildingId);
+        }
+        if (currentUser.isAdmin()) {
+            return invoiceDAO.countUnpaidInvoices();
+        }
+
         int sum = 0;
-        for (Long id : currentUser.getBuildingIds()) sum += invoiceDAO.countUnpaidInvoicesByBuilding(id);
+        for (Long id : currentUser.getBuildingIds()) {
+            sum += invoiceDAO.countUnpaidInvoicesByBuilding(id);
+        }
         return sum;
     }
-    
+
     private int getActiveContractsCount() {
         if (selectedBuildingId != null) {
             return (int) contractDAO.getContractsByBuilding(selectedBuildingId).stream()
                     .filter(c -> "ACTIVE".equals(c.getStatus())).count();
         }
-        if (currentUser.isAdmin()) return contractDAO.countActiveContracts();
-        
+        if (currentUser.isAdmin()) {
+            return contractDAO.countActiveContracts();
+        }
+
         int sum = 0;
         for (Long id : currentUser.getBuildingIds()) {
             sum += (int) contractDAO.getContractsByBuilding(id).stream()
@@ -224,7 +272,6 @@ public class DashboardPanel extends JPanel {
     }
 
     // ================= UI SECTIONS (Giữ nguyên style cũ) =================
-
     private JPanel createKPISection() {
         JPanel section = new JPanel();
         section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
@@ -291,7 +338,9 @@ public class DashboardPanel extends JPanel {
 
         if (onClick != null) {
             card.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent e) { onClick.run(); }
+                public void mouseClicked(MouseEvent e) {
+                    onClick.run();
+                }
             });
         }
         return card;
@@ -352,7 +401,7 @@ public class DashboardPanel extends JPanel {
             int m = cal.get(Calendar.MONTH) + 1;
             int y = cal.get(Calendar.YEAR);
             labels.add(m + "/" + (y % 100));
-            
+
             // Logic chart (đã dùng selectedBuildingId trong getMonthlyRevenue)
             if (selectedBuildingId != null) {
                 values.add(invoiceDAO.getMonthlyRevenue(m, y, selectedBuildingId));
@@ -381,7 +430,7 @@ public class DashboardPanel extends JPanel {
 
         int paid = 0;
         int unpaid = 0;
-        
+
         if (selectedBuildingId != null) {
             paid = invoiceDAO.countPaidInvoicesByBuilding(selectedBuildingId);
             unpaid = invoiceDAO.countUnpaidInvoicesByBuilding(selectedBuildingId);
@@ -401,59 +450,110 @@ public class DashboardPanel extends JPanel {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        if (amount == null) amount = BigDecimal.ZERO;
+        if (amount == null) {
+            amount = BigDecimal.ZERO;
+        }
         DecimalFormat formatter = new DecimalFormat("#,###");
         return formatter.format(amount) + " đ";
     }
 
     // --- INNER CLASSES FOR CHARTS ---
     private class LineChartPanel extends JPanel {
-        private List<String> labels; private List<BigDecimal> values; private Color lineColor;
+
+        private List<String> labels;
+        private List<BigDecimal> values;
+        private Color lineColor;
+
         public LineChartPanel(List<String> labels, List<BigDecimal> values, Color lineColor) {
-            this.labels = labels; this.values = values; this.lineColor = lineColor;
-            setBackground(CARD_BG); setOpaque(false);
+            this.labels = labels;
+            this.values = values;
+            this.lineColor = lineColor;
+            setBackground(CARD_BG);
+            setOpaque(false);
         }
-        @Override protected void paintComponent(Graphics g) {
-            super.paintComponent(g); Graphics2D g2 = (Graphics2D) g;
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            int w = getWidth(), h = getHeight(); int pad = 30;
-            g2.setColor(Color.LIGHT_GRAY); g2.drawLine(pad, h - pad, w - pad, h - pad); g2.drawLine(pad, pad, pad, h - pad);
-            if (values == null || values.isEmpty()) return;
+            int w = getWidth(), h = getHeight();
+            int pad = 30;
+            g2.setColor(Color.LIGHT_GRAY);
+            g2.drawLine(pad, h - pad, w - pad, h - pad);
+            g2.drawLine(pad, pad, pad, h - pad);
+            if (values == null || values.isEmpty()) {
+                return;
+            }
             BigDecimal max = values.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ONE);
-            if (max.compareTo(BigDecimal.ZERO) == 0) max = BigDecimal.valueOf(100);
+            if (max.compareTo(BigDecimal.ZERO) == 0) {
+                max = BigDecimal.valueOf(100);
+            }
             int stepX = (w - 2 * pad) / Math.max(1, values.size() - 1);
             int prevX = pad, prevY = h - pad;
-            g2.setColor(lineColor); g2.setStroke(new BasicStroke(2f));
+            g2.setColor(lineColor);
+            g2.setStroke(new BasicStroke(2f));
             for (int i = 0; i < values.size(); i++) {
                 int x = pad + i * stepX;
                 double val = values.get(i).doubleValue();
                 int y = h - pad - (int) ((val / max.doubleValue()) * (h - 2 * pad));
-                if (i > 0) g2.drawLine(prevX, prevY, x, y);
+                if (i > 0) {
+                    g2.drawLine(prevX, prevY, x, y);
+                }
                 g2.fillOval(x - 3, y - 3, 6, 6);
                 if (values.size() <= 12 || i % 2 == 0) {
-                    g2.setColor(Color.GRAY); g2.setFont(new Font("Arial", Font.PLAIN, 10));
-                    g2.drawString(labels.get(i), x - 10, h - pad + 15); g2.setColor(lineColor);
+                    g2.setColor(Color.GRAY);
+                    g2.setFont(new Font("Arial", Font.PLAIN, 10));
+                    g2.drawString(labels.get(i), x - 10, h - pad + 15);
+                    g2.setColor(lineColor);
                 }
-                prevX = x; prevY = y;
+                prevX = x;
+                prevY = y;
             }
         }
     }
 
     private class PieChartPanel extends JPanel {
-        private int paid, unpaid; private Color c1, c2;
-        public PieChartPanel(int p, int u, Color c1, Color c2) { this.paid = p; this.unpaid = u; this.c1 = c1; this.c2 = c2; setBackground(CARD_BG); }
-        @Override protected void paintComponent(Graphics g) {
-            super.paintComponent(g); Graphics2D g2 = (Graphics2D) g;
+
+        private int paid, unpaid;
+        private Color c1, c2;
+
+        public PieChartPanel(int p, int u, Color c1, Color c2) {
+            this.paid = p;
+            this.unpaid = u;
+            this.c1 = c1;
+            this.c2 = c2;
+            setBackground(CARD_BG);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            int w = getWidth(), h = getHeight(); int d = Math.min(w, h) - 40;
+            int w = getWidth(), h = getHeight();
+            int d = Math.min(w, h) - 40;
             int x = (w - d) / 2, y = (h - d) / 2;
             int total = paid + unpaid;
-            if (total == 0) { g2.setColor(Color.LIGHT_GRAY); g2.drawOval(x, y, d, d); g2.drawString("Chưa có dữ liệu", x + d / 2 - 40, y + d / 2); return; }
+            if (total == 0) {
+                g2.setColor(Color.LIGHT_GRAY);
+                g2.drawOval(x, y, d, d);
+                g2.drawString("Chưa có dữ liệu", x + d / 2 - 40, y + d / 2);
+                return;
+            }
             int angle1 = (int) Math.round((double) paid / total * 360);
-            g2.setColor(c1); g2.fillArc(x, y, d, d, 90, -angle1);
-            g2.setColor(c2); g2.fillArc(x, y, d, d, 90 - angle1, -(360 - angle1));
-            g2.setColor(c1); g2.fillRect(w - 100, h - 40, 10, 10); g2.setColor(Color.BLACK); g2.drawString("Đã thu (" + paid + ")", w - 85, h - 30);
-            g2.setColor(c2); g2.fillRect(w - 100, h - 20, 10, 10); g2.setColor(Color.BLACK); g2.drawString("Chưa thu (" + unpaid + ")", w - 85, h - 10);
+            g2.setColor(c1);
+            g2.fillArc(x, y, d, d, 90, -angle1);
+            g2.setColor(c2);
+            g2.fillArc(x, y, d, d, 90 - angle1, -(360 - angle1));
+            g2.setColor(c1);
+            g2.fillRect(w - 100, h - 40, 10, 10);
+            g2.setColor(Color.BLACK);
+            g2.drawString("Đã thu (" + paid + ")", w - 85, h - 30);
+            g2.setColor(c2);
+            g2.fillRect(w - 100, h - 20, 10, 10);
+            g2.setColor(Color.BLACK);
+            g2.drawString("Chưa thu (" + unpaid + ")", w - 85, h - 10);
         }
     }
 }
